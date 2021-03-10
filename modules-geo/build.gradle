@@ -1,0 +1,30 @@
+plugins {
+    id 'java'
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenLocal()
+    maven { url 'https://repo.spring.io/snapshot' }
+    maven { url 'https://repo.spring.io/milestone' }
+    maven { url 'http://download.osgeo.org/webdav/geotools' }
+    maven { url 'http://repo.boundlessgeo.com/main' }
+    maven { url 'http://download.java.net/maven/2' }
+    mavenCentral()
+}
+
+dependencies {
+
+    implementation "org.geotools.jdbc:gt-jdbc-mysql:${geotoolsVersion}"
+    implementation "org.geotools:gt-shapefile:${geotoolsVersion}"
+    implementation "org.geotools:gt-image:${geotoolsVersion}"
+    implementation "org.geotools:gt-wms:${geotoolsVersion}"
+    implementation "org.geotools:gt-swing:${geotoolsVersion}"
+
+    implementation 'org.projectlombok:lombok:1.18.16'
+    implementation "cn.booktable:booktable-common:${booktableVersion}"
+    implementation "cn.booktable:booktable-core:${booktableVersion}"
+    implementation 'mysql:mysql-connector-java:8.0.22'
+}

@@ -1,0 +1,3 @@
+rootProject.name = 'jcode'
+//include 'modules-activiti', 'app-admin', 'thymeleaf-shiro','modules-geo'
+include   'app-admin', 'modules-geo'

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:secure="http://dev.booktable.cn/thymeleaf/shiro">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <th:block th:replace="fragments/headTag2 ::style "></th:block>
+    <script type="text/javascript">
+        function submitApprove(){
+
+            var instanceCode=$("#instanceCode").val();
+            loadJsonData({url:"./approve/"+instanceCode,data:$("#form_instance_approve").serialize(),complete:function(resultData){
+                    alertLayer(resultData.msg);
+                }});
+        }
+    </script>
+</head>
+<body>
+<div class="page-navs bg-white">
+    <div class="nav-scroller">
+        <div class="nav nav-tabs nav-line nav-color-primary d-flex align-items-center justify-contents-center w-100">
+            <a class="nav-link active show" data-toggle="tab" href="#listTab">[[#{i18n.all}]]
+                (<span class="count ml-1 pager_totalnum"></span>）
+            </a>
+
+
+
+        </div>
+    </div>
+</div>
+<div class="page-inner">
+    <div class="tab-content">
+        <div class="tab-pane in active" id="listTab">
+            <div class="card">
+<div class="card-header">
+    <h1 th:text="${actInstance?.instanceName}"></h1>(<span th:text="${actInstance?.status}"></span>)<br><span th:text="${actInstance?.description}"></span>
+</div>
+                <div class="card-body table-responsive" id="datalist">
+                    <h4 class="panel-title">表单</h4>
+                    <table   class="table table-hover" >
+                        <thead>
+                        <tr>
+                            <th data-th-width="80px" th:text="#{i18n.serial}"></th>
+                            <th >name</th>
+                            <th >description</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+
+                        <tr th:each="modelObj,status: ${actInstance?.form}">
+                            <td th:text="${ status.index +1}"></td>
+                            <td th:text="${modelObj?.key}"></td>
+                            <td th:text="${modelObj?.value}"></td>
+                        </tr>
+
+                        </tbody>
+                    </table>
+
+                    <h4 class="panel-title">当前审批节点</h4>
+                    <table   class="table table-hover" >
+                        <thead>
+                        <tr>
+                            <th data-th-width="80px" th:text="#{i18n.serial}"></th>
+                            <th >id</th>
+                            <th >name</th>
+                            <th >description</th>
+                            <th >priority</th>
+                            <th >owner</th>
+                            <th >assignee</th>
+                            <th >processInstanceId</th>
+                            <th >executionId</th>
+                            <th >processDefinitionId</th>
+                            <th >createTime</th>
+                            <th >dueDate</th>
+                            <th >category</th>
+                            <th >parentTaskId</th>
+                            <th >tenantId</th>
+                            <th >formKey</th>
+                            <th >claimTime</th>
+                            <th >taskLocalVariables</th>
+                            <th >processVariables</th>
+                            <th data-th-width="120px" th:text="#{i18n.actions}">操作</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+
+                        <tr th:each="modelObj,status: ${actInstance?.taskList}">
+                            <td th:text="${ status.index +1}"></td>
+                            <td th:text="${modelObj?.id}"></td>
+                            <td th:text="${modelObj?.name}"></td>
+                            <td th:text="${modelObj?.description}"></td>
+                            <td th:text="${modelObj?.priority}"></td>
+                            <td th:text="${modelObj?.owner}"></td>
+                            <td th:text="${modelObj?.assignee}"></td>
+                            <td th:text="${modelObj?.processInstanceId}"></td>
+                            <td th:text="${modelObj?.executionId}"></td>
+                            <td th:text="${#dates.format(modelObj?.createTime,'yyyy-MM-dd HH:mm')}"></td>
+                            <td th:text="${#dates.format(modelObj?.dueDate,'yyyy-MM-dd HH:mm')}"></td>
+                            <td th:text="${modelObj?.category}"></td>
+                            <td th:text="${modelObj?.parentTaskId}"></td>
+                            <td th:text="${modelObj?.tenantId}"></td>
+                            <td th:text="${modelObj?.formKey}"></td>
+                            <td  th:text="${#dates.format(modelObj?.claimTime,'yyyy-MM-dd HH:mm')}"></td>
+                            <td th:text="${modelObj?.taskLocalVariables}"></td>
+                            <td th:text="${modelObj?.processVariables}"></td>
+                        </tr>
+
+                        </tbody>
+                    </table>
+
+                    <h4 class="panel-title">流程处理</h4>
+                    <table   class="table table-hover" >
+                        <thead>
+                        <tr>
+                            <th data-th-width="80px" th:text="#{i18n.serial}"></th>
+                            <th >id</th>
+                            <th >审批状态</th>
+                            <th >审批意见</th>
+                            <th >审批人</th>
+                            <th >审批时间</th>
+                            <th data-th-width="120px" th:text="#{i18n.actions}">操作</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+
+                        <tr th:each="modelObj,status: ${actInstance?.commentList}">
+                            <td th:text="${ status.index +1}"></td>
+                            <td th:text="${modelObj?.id}"></td>
+                            <td th:text="${modelObj?.status}"></td>
+                            <td th:text="${modelObj?.message}"></td>
+                            <td th:text="${modelObj?.userId}"></td>
+                            <td th:text="${#dates.format(modelObj?.createTime,'yyyy-MM-dd HH:mm')}"></td>
+                        </tr>
+
+                        </tbody>
+                    </table>
+
+
+                    <h4 class="panel-title">流程表格</h4>
+                    <table   class="table table-hover" >
+                        <thead>
+                        <tr>
+                            <th data-th-width="80px" th:text="#{i18n.serial}"></th>
+                            <th >节点</th>
+                            <th >节点名称</th>
+                            <th >处理人</th>
+                            <th >流向</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+
+                        <tr th:each="modelObj,status: ${actInstance?.timelineList}">
+                            <td th:text="${ status.index +1}"></td>
+                            <td th:text="${modelObj?.id}"></td>
+                            <td th:text="${modelObj?.name}"></td>
+                            <td th:text="${modelObj?.userId}"></td>
+                            <td >
+                                <th:block th:each="outgoingObj,subSta: ${modelObj.outgoing}">
+                                    <span th:if="${subSta.index > 0 }"> / </span>
+                                    <a th:text="${outgoingObj?.name}"></a>
+                                </th:block>
+                            </td>
+                        </tr>
+
+                        </tbody>
+                    </table>
+
+                    <form id="form_instance_approve">
+
+                        <input type="text" placeholder="taskId" name="taskId" id="taskId">
+                        <input type="text" placeholder="instanceCode" name="instanceCode" id="instanceCode" th:value="${actInstance?.instanceCode}">
+                        <input type="text" placeholder="userId" id="userId" name="userId">
+                        <input type="text" placeholder="message" id="comment" name="comment" value="测试通知了!">
+                        <select name="status"  id="status">
+                            <option value="APPROVED">同意</option>
+                            <option value="REJECTED">拒绝</option>
+                            <option value="CANCELED">挂起</option>
+                            <option value="DELETED">删除</option>
+                        </select>
+                        <input type="button" value="提交审批" onclick="submitApprove()" />
+                    </form>
+
+                </div>
+                <div class="card-footer">
+                    <h4 class="panel-title">流程图</h4>
+                    <div class="flowImgContainer">
+                    <embed class="flowImg" type="image/svg+xml"  th:src="@{./image/{id}(id=${actInstance?.instanceCode})}"  />
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+
+
+
+    </div>
+</div>
+<!--select2-->
+<!---->
+
+<th:block th:replace="fragments/headTag2 ::script "></th:block>
+
+<style type="text/css" >
+.flowImg{
+width: 100%;
+    height: 450px;
+}
+
+</style>
+
+</body>
+</html>
