@@ -76,7 +76,7 @@ public class StyleGenerator {
         return Color.decode(code);
     }
 
-    public StyleType parseStyleType(String name){
+    public static StyleType getStyleType(String name){
         StyleType styleType=null;
         if(StyleType.POLYGON.name().equals(name)){
             styleType=StyleType.POLYGON;
@@ -84,6 +84,8 @@ public class StyleGenerator {
             styleType=StyleType.POINT;
         }else if(StyleType.LINE.name().equals(name)){
             styleType=StyleType.LINE;
+        }else if(StyleType.RASTER.name().equals(name)){
+            styleType=StyleType.RASTER;
         }
         return styleType;
     }
@@ -113,6 +115,13 @@ public class StyleGenerator {
         return style;
     }
 
+    public Style rasterStyle(){
+        StyleBuilder sb = new StyleBuilder();
+        RasterSymbolizer rasterSymbolizer=sb.createRasterSymbolizer();
+        Style baseStyle = sb.createStyle(rasterSymbolizer);
+        return baseStyle;
+    }
+
     public Style getStyle(StyleType type){
         if(type.compareTo(StyleType.POLYGON)==0){
             return polygonStyle();
@@ -122,6 +131,9 @@ public class StyleGenerator {
         }
         if(type.compareTo(StyleType.LINE)==0){
             return lineStyle();
+        }
+        if(type.compareTo(StyleType.RASTER)==0){
+            return rasterStyle();
         }
         return null;
     }
@@ -140,26 +152,35 @@ public class StyleGenerator {
         return value==null?defaultValue:value.floatValue();
     }
 
+
     public  Style createPolygonStyle(
             Color outlineColor, Color fillColor, float opacity, String labelField, Font labelFont,Color fontColor,String iconUri,String iconFormat) {
         Stroke stroke = sf.createStroke(ff.literal(outlineColor), ff.literal(1.0f));
         Fill fill = Fill.NULL;
         if (fillColor != null) {
             fill = sf.createFill(ff.literal(fillColor), ff.literal(opacity));
+            if(iconUri!=null && iconFormat!=null){
+                StyleBuilder sb = new StyleBuilder();
+                ExternalGraphic extg = sb.createExternalGraphic(iconUri,iconFormat);
+                Graphic graphic = sb.createGraphic(extg, null, null);
+                graphic.setSize(NilExpression.NIL);
+                fill.setGraphicFill(graphic);
+            }
         }
         PolygonSymbolizer polySym = sf.createPolygonSymbolizer(stroke, fill, null);
         PointSymbolizer iconSym=null;
-        if(iconUri!=null && iconFormat!=null){
-            // mark
-            StyleBuilder sb = new StyleBuilder();
-            ExternalGraphic extg = sb.createExternalGraphic(iconUri, iconFormat);
-//            Mark mark = sb.createMark("square");
-//            mark.getStroke().setWidth(sb.getFilterFactory().literal(10));
-//            Graphic graphic = sb.createGraphic(extg, mark, null);
-            Graphic graphic = sb.createGraphic(extg, null, null);
-            graphic.setSize(NilExpression.NIL);
-            iconSym= sb.createPointSymbolizer(graphic);
-        }
+//        if(iconUri!=null && iconFormat!=null){
+//            // mark
+//            StyleBuilder sb = new StyleBuilder();
+//
+//            ExternalGraphic extg = sb.createExternalGraphic(iconUri, iconFormat);
+////            Mark mark = sb.createMark("square");
+////            mark.getStroke().setWidth(sb.getFilterFactory().literal(10));
+////            Graphic graphic = sb.createGraphic(extg, mark, null);
+//            Graphic graphic = sb.createGraphic(extg, null, null);
+//            graphic.setSize(NilExpression.NIL);
+//            iconSym= sb.createPointSymbolizer(graphic);
+//        }
         if (labelField == null) {
 
 //            return SLD.wrapSymbolizers(polySym);
@@ -186,6 +207,8 @@ public class StyleGenerator {
             return iconSym==null?SLD.wrapSymbolizers(polySym,textSym):SLD.wrapSymbolizers(polySym,textSym,iconSym);
         }
     }
+
+
     public Style parse(PolygonStyle polygonStyle){
         Color outlineColor=colorCode(replaceValue(polygonStyle.getOutlineColor(),"black"));
         Color fillColor=colorCode(replaceValue(polygonStyle.getFillColor(),"green"));
@@ -250,18 +273,34 @@ public class StyleGenerator {
         return  style;
     }
 
+    public Style parseRaster(GenericStyle genericStyle){
+        StyleBuilder sb = new StyleBuilder();
+        RasterSymbolizer rasterSymbolizer=sb.createRasterSymbolizer();
+        if(genericStyle.getOpacity()!=null) {
+            rasterSymbolizer.setOpacity(ff.literal(genericStyle.getOpacity()));
+        }
+        Style baseStyle = sb.createStyle(rasterSymbolizer);
+        return baseStyle;
+    }
+
     public Style toStyle(String json,StyleType type){
-        if(type.compareTo(StyleType.POLYGON)==0){
-            PolygonStyle polygonStyle= JSON.parseObject(json,PolygonStyle.class);
-            return parse(polygonStyle);
-        }
-        if(type.compareTo(StyleType.POINT)==0){
-            PointStyle pointStyle=JSON.parseObject(json,PointStyle.class);
-            return parse(pointStyle);
-        }
-        if(type.compareTo(StyleType.LINE)==0){
-            LineStyle lineStyle=JSON.parseObject(json,LineStyle.class);
-            return parse(lineStyle);
+        switch (type){
+            case POLYGON:{
+                PolygonStyle polygonStyle= JSON.parseObject(json,PolygonStyle.class);
+                return parse(polygonStyle);
+            }
+            case POINT:{
+                PointStyle pointStyle=JSON.parseObject(json,PointStyle.class);
+                return parse(pointStyle);
+            }
+            case LINE:{
+                LineStyle lineStyle=JSON.parseObject(json,LineStyle.class);
+                return parse(lineStyle);
+            }
+            case RASTER:{
+                GenericStyle genericStyle=JSON.parseObject(json,GenericStyle.class);
+                return parseRaster(genericStyle);
+            }
         }
         return null;
     }

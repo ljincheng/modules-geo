@@ -4,11 +4,12 @@
             Extends: MapGIS.Model,
             Implements: [Events, Options],
             options:{
-                maxLevel:13,
+                maxLevel:6,
                 minLevel:0,
                 origin: {x:  -180, y: 90},
                 fullExtent:[-180,-90,180, 90],
-                tileSize:256
+                tileSize:256,
+                polling:false  ////在地图达到临界点时，重复显示
             },
             resolution:function(level)
             {
@@ -59,7 +60,9 @@
                                     }
                                 }
                                 //row=row%total;
-                                cell=cell%total;
+                                if(this.options.polling) {
+                                     cell=cell%total;
+                                }
                                 if(!inOld)
                                 {
                                     tiles.push({z:z,r:row,c:cell,l:l,t:t,id:id,v:0});

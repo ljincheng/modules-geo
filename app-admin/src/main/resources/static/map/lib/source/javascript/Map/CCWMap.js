@@ -7,8 +7,8 @@
                 options:{
                     fullMode:false,
                     maptype: 0,
-                    level: 2,
-                    levelMax: 18
+                    level: 1,
+                    levelMax: 6
                 },
                 paletteLayer:null,
                 imageLayer: null,
@@ -71,7 +71,7 @@
                 },
                 customLoading:function(){
                     // this.baseLayer = new MapGIS.Layers.OpenstreetLayer({id:"LB01",zIndex:1});
-                    this.baseLayer =new MapGIS.Layers.CCWFeatureLayer({id:"ccwLayer01",zIndex:1,url:"http://localhost:8080/apps/geo/map/image/{z}/{y}/{x}",startShowLevel:0,zIndex:100});
+                    this.baseLayer =new MapGIS.Layers.CCWFeatureLayer({id:"ccwLayer01",zIndex:1,url:"http://localhost:8080/apps/geo/map/image/{z}/{y}/{x}",startShowLevel:0});
                     this.addLayer(this.baseLayer);
                     // this.ccwLayer = new MapGIS.Layers.CCWFeatureLayer({id:"ccwLayer01",url:"http://localhost:8080/apps/geo/map/wms?bbox={bbox}&z={z}&x={x}&y={y}&area={area}&reload=true",startShowLevel:1,zIndex:100});
                     this.imageLayer = new MapGIS.Layers.MarkerLayer({ id: "imageLayer01", zIndex:25 });

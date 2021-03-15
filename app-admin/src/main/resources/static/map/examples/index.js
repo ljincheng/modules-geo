@@ -18,10 +18,51 @@ function loadMap() {
     map.imageLayer.options["visibleWindow"]=true;
     map.imageLayer.setData([{ 'x': 135233.577235, 'y': 24584.76784,'title':'4403080010020900017编码', 'html': '4403080010020900017', 'content': '4403080010020900017', 'marker': { 'imgClass': "markerTransparent "}}, { 'x': 140157.953695, 'y': 24947.496669, 'content': "编码：4403080040021200031<br><hr>样式为markerRed" }, { 'x': 132782.505746, 'y': 20587.174619, 'content': "编码：4403080020040800031<br><hr>样式为markerArrows", 'marker': { 'imgClass': "markerArrows"} }, { 'x': 131469.777941, 'y': 20583.994072, 'content': "编码：4403080030031100006<br><hr>样式为markerA", 'marker': { 'imgClass': "markerA"}}]);
      map.paletteLayer.addEvent("change",function(param){
-         alert(JSON.encode(param.data));
+          // alert(JSON.encode(param.data));
+         drawSql(param);
      });
     
 }
+
+function loadTestData(){
+    var geom=[{"gtype":"polygon","data":[[-107.9296875,60.732421875],[-101.42578125,42.275390625],[-59.58984375,52.119140625],[-70.6640625,59.501953125],[-76.11328125,62.138671875],[-84.90234375,60.99609375],[-84.90234375,61.875],[-84.90234375,61.875]]}];
+    map.paletteLayer.loadData(geom);
+}
+function geoSql(geoValue){
+    var sql="INSERT INTO geotools.parking_gis " +
+        "(parking_uuid, parking_no, gis_point, width, height, opacity, angle)" +
+        "VALUES(replace(uuid(),'-',''), '车位XX', ST_PolygonFromText('POLYGON (("+geoValue+"))')";
+    sql+=", 100.0000, 100.0000, 1.0, 180)";
+    return sql;
+}
+function drawSql(param){
+    var geoData=param.data;
+    if(geoData.length>0){
+        for(var i=0,k=geoData.length;i<k;i++){
+            var geoObj=geoData[i];
+            if(geoObj.gtype == "polygon"){
+                var d=geoObj.data;
+                var geotext=d[0][0] +" "+d[0][1]+",";
+                for(var j=1,jk=d.length;j<jk;j++){
+                    var p=d[j];
+                    geotext+=p[0] +" "+p[1]+",";
+                }
+                geotext+=d[0][0] +" "+d[0][1];
+                alert(geoSql(geotext));
+
+            }else if(geoObj.gtype=='rectangle'){
+                var d=geoObj.data;
+                var geotext=d[0][0] +" "+d[0][1]+",";
+                geotext+=d[0][0] +" "+d[1][1]+",";
+                geotext+=d[1][0] +" "+d[1][1]+",";
+                geotext+=d[1][0] +" "+d[0][1]+",";
+                geotext+=d[0][0] +" "+d[0][1];
+                alert(geoSql(geotext));
+            }
+        }
+    }
+}
+
 window.addEvent('domready', function () {
                 //        initWindow();
                 loadMap();
@@ -37,6 +78,8 @@ var testBtnClickEvent=function()
     map.setCenter({"x":113.96873474121094,"y":11.57135009765625});
     map.imageLayer.setData([{"x":113.96873474121094,"y":11.57135009765625}]);
 }
+
+
  
 var drawGeom=function(p)
 {
