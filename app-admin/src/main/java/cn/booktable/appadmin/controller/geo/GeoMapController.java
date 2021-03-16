@@ -68,12 +68,10 @@ public class GeoMapController {
             if(StringUtils.isBlank(param.getBbox())){
                 param.setBbox("-180.0,-89.99892578125002,180.0,83.599609375");
             }
-
-            BufferedImage image = mapService.paint(param);
 //            response.setContentType("image/"+param.getFormat());
             response.setContentType("image/png");
             final ServletOutputStream os = response.getOutputStream();
-            ImageIO.write(image, param.getFormat(), os);
+            mapService.paint(param,os);
             os.flush();
         }catch (Exception ex){
             ex.printStackTrace();
@@ -97,10 +95,9 @@ public class GeoMapController {
                 param.setArea("256,256");
            String bbox= TileModelProvider.instance().bbox(z,x,y);
                 param.setBbox(bbox);
-            BufferedImage image = mapService.paint(param);
             response.setContentType("image/png");
             final ServletOutputStream os = response.getOutputStream();
-            ImageIO.write(image, param.getFormat(), os);
+            mapService.paint(param,os);
             os.flush();
         }catch (Exception ex){
             ex.printStackTrace();

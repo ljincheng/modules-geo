@@ -35,14 +35,14 @@ import java.util.*;
  */
 public final class GeoMapContent  extends MapContent {
 
-    private GeoMapProvider mGeoMapProvider;
+    private GeoMapProvider mMapProvider;
     static StyleFactory styleFactory = CommonFactoryFinder.getStyleFactory(null);
     private static Map<String,List<Layer>> mMapLayerMap=new HashMap<>();
     private static long mCacheTime=0l;
     private static long CACHETIME_MAX=1000l * 60*10;
 
     public GeoMapContent(GeoMapProvider geoDaoProvider){
-        this.mGeoMapProvider=geoDaoProvider;
+        this.mMapProvider=geoDaoProvider;
     }
 
     public void cleanCache(){
@@ -76,7 +76,7 @@ public final class GeoMapContent  extends MapContent {
 
 
     private List<GeoMapLayerEntity> mapLayerListByMapId(String mapId){
-        List<GeoMapLayerEntity> mapLayers=mGeoMapProvider.getGeoMapManageService().fullMapLayerListByMapId(mapId);
+        List<GeoMapLayerEntity> mapLayers=mMapProvider.mapManageService().fullMapLayersByMapId(mapId);
         return mapLayers;
     }
 
@@ -128,7 +128,7 @@ public final class GeoMapContent  extends MapContent {
                     GridCoverageLayer gridLayer = new GridCoverageLayer(coverage, style);
                     layer = gridLayer;
                 } else if (styleInfo != null) {
-                    FeatureSource fs =mGeoMapProvider.getDataStore().getFeatureSource(layerInfo.getLayerName());
+                    FeatureSource fs =mMapProvider.getDataStore().getFeatureSource(layerInfo.getLayerName());
                     style = getStyle(styleInfo);
                     if (fs != null && style != null) {
                         FeatureLayer featureLayer = new FeatureLayer(fs, style);

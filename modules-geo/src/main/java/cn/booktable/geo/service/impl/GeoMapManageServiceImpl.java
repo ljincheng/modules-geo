@@ -20,7 +20,7 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
 
 
     @Override
-    public List<GeoMapLayerEntity> fullMapLayerListByMapId(String mapId) {
+    public List<GeoMapLayerEntity> fullMapLayersByMapId(String mapId) {
         Connection conn= DBHelper.getConnection();
         List<GeoMapLayerEntity> mapInfoList=mapLayerListByMapId(conn,mapId);
         try{
@@ -33,7 +33,7 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
         return mapInfoList;
     }
 
-    private List<GeoMapLayerEntity> mapLayerFullColumnListByMapId(Connection conn,String mapId) {
+    private List<GeoMapLayerEntity> mapLayerFullColumnListByMapId(Connection conn, String mapId) {
         List<GeoMapLayerEntity> mapInfoList=new ArrayList<GeoMapLayerEntity>();
         String sql="SELECT t2.id, t2.map_id, t2.layer_id, t2.layer_order, t2.display, t2.style_id \n" +
                 ",t1.title as l_i_title, t1.layer_name, t1.layer_type, t1.envelope, t1.layer_filter, t1.create_time as l_i_ctime, t1.update_time as l_i_utime\n" +
@@ -46,37 +46,37 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
         try {
             ps = conn.prepareStatement(sql);
             ps.setString(1, mapId);
-            if (ps.execute()) {
-                ResultSet res = ps.executeQuery();
-                while (res.next()) {
-                    GeoMapLayerEntity obj = new GeoMapLayerEntity();
-                    obj.setId(res.getString(1));
-                    obj.setMapId(res.getString(2));
-                    obj.setLayerId(res.getString(3));
-                    obj.setLayerOrder(res.getInt(4));
-                    obj.setDisplay(res.getInt(5));
-                    obj.setStyleId(res.getString(6));
-                    GeoLayerInfoEntity layerInfo=new GeoLayerInfoEntity();
-                    layerInfo.setLayerId(obj.getLayerId());
-                    layerInfo.setTitle(res.getString(7));
-                    layerInfo.setLayerName(res.getString(8));
-                    layerInfo.setLayerType(res.getString(9));
-                    layerInfo.setEnvelope(res.getString(10));
-                    layerInfo.setLayerFilter(res.getString(11));
-                    layerInfo.setCreateTime(res.getDate(12));
-                    layerInfo.setUpdateTime(res.getDate(13));
-                    obj.setLayerInfoEntity(layerInfo);
-                    GeoStyleInfoEntity styleInfo=new GeoStyleInfoEntity();
-                    styleInfo.setStyleId(obj.getStyleId());
-                    styleInfo.setTitle(res.getString(14));
-                    styleInfo.setStyleType(res.getString(15));
-                    styleInfo.setContent(res.getString(16));
-                    styleInfo.setCreateTime(res.getDate(17));
-                    styleInfo.setUpdateTime(res.getDate(18));
-                    obj.setStyleInfoEntity(styleInfo);
-                    mapInfoList.add(obj);
-                }
+
+            ResultSet res = ps.executeQuery();
+            while (res.next()) {
+                GeoMapLayerEntity obj = new GeoMapLayerEntity();
+                obj.setId(res.getString(1));
+                obj.setMapId(res.getString(2));
+                obj.setLayerId(res.getString(3));
+                obj.setLayerOrder(res.getInt(4));
+                obj.setDisplay(res.getInt(5));
+                obj.setStyleId(res.getString(6));
+                GeoLayerInfoEntity layerInfo=new GeoLayerInfoEntity();
+                layerInfo.setLayerId(obj.getLayerId());
+                layerInfo.setTitle(res.getString(7));
+                layerInfo.setLayerName(res.getString(8));
+                layerInfo.setLayerType(res.getString(9));
+                layerInfo.setEnvelope(res.getString(10));
+                layerInfo.setLayerFilter(res.getString(11));
+                layerInfo.setCreateTime(res.getDate(12));
+                layerInfo.setUpdateTime(res.getDate(13));
+                obj.setLayerInfoEntity(layerInfo);
+                GeoStyleInfoEntity styleInfo=new GeoStyleInfoEntity();
+                styleInfo.setStyleId(obj.getStyleId());
+                styleInfo.setTitle(res.getString(14));
+                styleInfo.setStyleType(res.getString(15));
+                styleInfo.setContent(res.getString(16));
+                styleInfo.setCreateTime(res.getDate(17));
+                styleInfo.setUpdateTime(res.getDate(18));
+                obj.setStyleInfoEntity(styleInfo);
+                mapInfoList.add(obj);
             }
+
         }catch (Exception ex){
             throw new GeoException(ex);
         }finally {
