@@ -24,44 +24,6 @@ function loadMap() {
     
 }
 
-function loadTestData(){
-    var geom=[{"gtype":"polygon","data":[[-107.9296875,60.732421875],[-101.42578125,42.275390625],[-59.58984375,52.119140625],[-70.6640625,59.501953125],[-76.11328125,62.138671875],[-84.90234375,60.99609375],[-84.90234375,61.875],[-84.90234375,61.875]]}];
-    map.paletteLayer.loadData(geom);
-}
-function geoSql(geoValue){
-    var sql="INSERT INTO geotools.parking_gis " +
-        "(parking_uuid, parking_no, gis_point, width, height, opacity, angle)" +
-        "VALUES(replace(uuid(),'-',''), '车位XX', ST_PolygonFromText('POLYGON (("+geoValue+"))')";
-    sql+=", 100.0000, 100.0000, 1.0, 180)";
-    return sql;
-}
-function drawSql(param){
-    var geoData=param.data;
-    if(geoData.length>0){
-        for(var i=0,k=geoData.length;i<k;i++){
-            var geoObj=geoData[i];
-            if(geoObj.gtype == "polygon"){
-                var d=geoObj.data;
-                var geotext=d[0][0] +" "+d[0][1]+",";
-                for(var j=1,jk=d.length;j<jk;j++){
-                    var p=d[j];
-                    geotext+=p[0] +" "+p[1]+",";
-                }
-                geotext+=d[0][0] +" "+d[0][1];
-                alert(geoSql(geotext));
-
-            }else if(geoObj.gtype=='rectangle'){
-                var d=geoObj.data;
-                var geotext=d[0][0] +" "+d[0][1]+",";
-                geotext+=d[0][0] +" "+d[1][1]+",";
-                geotext+=d[1][0] +" "+d[1][1]+",";
-                geotext+=d[1][0] +" "+d[0][1]+",";
-                geotext+=d[0][0] +" "+d[0][1];
-                alert(geoSql(geotext));
-            }
-        }
-    }
-}
 
 window.addEvent('domready', function () {
                 //        initWindow();

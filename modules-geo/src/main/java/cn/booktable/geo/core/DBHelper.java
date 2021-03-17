@@ -77,6 +77,13 @@ public class DBHelper {
         }
     }
 
+    public static  void dispose(){
+        try {
+            mDataStore.dispose();
+        }catch (Exception ex){
+        }
+    }
+
     public static <T extends TableObject> List<T> queryList(Connection connection,String tableName,String[] columns,String orderBy,Class<T> t){
 
         ArrayList   mapInfoList=new ArrayList<T>();

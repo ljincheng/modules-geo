@@ -2,45 +2,36 @@ package cn.booktable.geo.service.impl;
 
 import cn.booktable.geo.core.DBHelper;
 import cn.booktable.geo.core.GeoException;
-import cn.booktable.geo.entity.GeoGeometryEntity;
+import cn.booktable.geo.core.GeoQuery;
+import cn.booktable.geo.core.GeoFeature;
+import cn.booktable.geo.core.QueryGenerator;
+import cn.booktable.geo.provider.GeoGeometryProvider;
 import cn.booktable.geo.service.GeoFeatureService;
-import org.geotools.data.DataUtilities;
-import org.geotools.data.FeatureSource;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Transaction;
-import org.geotools.data.simple.SimpleFeatureCollection;
-import org.geotools.data.simple.SimpleFeatureIterator;
+import org.geotools.data.*;
 import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.feature.simple.SimpleFeatureBuilder;
-import org.geotools.filter.identity.FeatureIdImpl;
-import org.geotools.jdbc.JDBCDataStore;
-import org.geotools.jdbc.JDBCFeatureReader;
-import org.locationtech.jts.geom.Coordinate;
+import org.geotools.data.simple.SimpleFeatureStore;
 import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.GeometryFactory;
+import org.opengis.feature.Property;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
 import org.opengis.feature.type.GeometryDescriptor;
+import org.opengis.filter.Filter;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author ljc
  */
 public class GeoFeatureServiceImpl implements GeoFeatureService {
 
-    private JDBCDataStore mDataStore;
+    private DataStore  mDataStore;
     {
-        mDataStore= (JDBCDataStore)DBHelper.dataStore();
+        mDataStore= DBHelper.dataStore();
     }
 
     @Override
-    public GeoGeometryEntity createGeometry(String layerName, Geometry geometry) {
+    public GeoFeature createGeometry(String layerName, Geometry geometry) {
         try {
             SimpleFeatureSource featureSource = mDataStore.getFeatureSource(layerName);
             if (featureSource == null) {
@@ -52,10 +43,10 @@ public class GeoFeatureServiceImpl implements GeoFeatureService {
             Map<String,Object> properties=new HashMap<>();
             if(attrList!=null){
                 for(AttributeDescriptor attr:attrList){
-                    properties.put(attr.getName().toString(),null);
+                    properties.put(attr.getLocalName(),null);
                 }
             }
-            GeoGeometryEntity geometryEntity=new GeoGeometryEntity();
+            GeoFeature geometryEntity=new GeoFeature();
             geometryEntity.setProperties(properties);
             geometryEntity.setName(descriptor.getName().toString());
             geometryEntity.setGeometry(geometry);
@@ -66,48 +57,125 @@ public class GeoFeatureServiceImpl implements GeoFeatureService {
     }
 
     @Override
-    public boolean addGeometry(String layerName,GeoGeometryEntity geometryEntity) {
+    public boolean addFeature(String layerName, GeoFeature geometryEntity) {
         try {
             SimpleFeatureSource featureSource= mDataStore.getFeatureSource(layerName);
             if(featureSource==null){
                 throw new GeoException("图层不存在");
             }
-            SimpleFeatureType schema = featureSource.getSchema();
-            FeatureWriter<SimpleFeatureType, SimpleFeature> writer =mDataStore.getFeatureWriterAppend(schema.getTypeName().toLowerCase(), Transaction.AUTO_COMMIT);
-            SimpleFeatureCollection featureCollection = featureSource.getFeatures();
-            SimpleFeature next = writer.next();
             Map<String, Object> atts = geometryEntity.getProperties();
-//            GeometryDescriptor descriptor = schema.getGeometryDescriptor();
-//            atts.put(descriptor.getName().toString(), geometryEntity.getGeometry());
-            for (Map.Entry<String, Object> entry : atts.entrySet()) {
-                next.setAttribute(entry.getKey(), entry.getValue());
-            }
-
+            SimpleFeatureType schema = featureSource.getSchema();
+            FeatureWriter<SimpleFeatureType, SimpleFeature> writer =mDataStore.getFeatureWriterAppend(schema.getTypeName(), Transaction.AUTO_COMMIT);
+            SimpleFeature next = writer.next();
+            GeometryDescriptor geomCol = schema.getGeometryDescriptor();
+             List<AttributeDescriptor> descList=schema.getAttributeDescriptors();
+             for(AttributeDescriptor att:descList){
+                 next.setAttribute(att.getLocalName(),atts.get(att.getLocalName()));
+             }
+            next.setAttribute(geomCol.getLocalName(), GeoGeometryProvider.getGeometry(geometryEntity));
             writer.write();
             writer.close();
         } catch (Exception e) {
-           throw new GeoException(e);
+            e.printStackTrace();
+           throw new GeoException(e.fillInStackTrace());
         }
         return true;
     }
 
     @Override
-    public boolean updateGeometry(String layerName,GeoGeometryEntity geometryEntity) {
-        return false;
+    public boolean updateFeature(GeoQuery query, GeoFeature geometryEntity) {
+        assert (QueryGenerator.hasLayerName(query) && QueryGenerator.hasFilter(query));
+        try {
+            SimpleFeatureSource featureSource= mDataStore.getFeatureSource(query.getLayerName());
+            if(featureSource==null){
+                throw new GeoException("图层不存在");
+            }
+
+            Filter filter= QueryGenerator.getFilter(query);
+            Map<String, Object> atts = geometryEntity.getProperties();
+            SimpleFeatureType schema = featureSource.getSchema();
+            FeatureWriter<SimpleFeatureType, SimpleFeature> writer =mDataStore.getFeatureWriter(schema.getTypeName(),filter, Transaction.AUTO_COMMIT);
+            while (writer.hasNext()) {
+                SimpleFeature next = writer.next();
+                GeometryDescriptor geomCol = schema.getGeometryDescriptor();
+                List<AttributeDescriptor> descList = schema.getAttributeDescriptors();
+                for (AttributeDescriptor att : descList) {
+                    next.setAttribute(att.getLocalName(), atts.get(att.getLocalName()));
+                }
+                next.setAttribute(geomCol.getLocalName(), GeoGeometryProvider.getGeometry(geometryEntity));
+                writer.write();
+            }
+            writer.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new GeoException(e.fillInStackTrace());
+        }
+        return true;
     }
 
     @Override
-    public boolean deleteGeometry(String layerName,String id) {
-        return false;
+    public boolean deleteFeature(GeoQuery query) {
+        assert(query!=null && QueryGenerator.hasLayerName(query) && QueryGenerator.hasFilter(query));
+        Transaction transaction =null;
+        try {
+            SimpleFeatureSource featureSource= mDataStore.getFeatureSource(query.getLayerName());
+            if(featureSource==null){
+                throw new GeoException("图层不存在");
+            }
+            Filter queryFilter= QueryGenerator.getFilter(query);
+             transaction = new DefaultTransaction("remove-"+query.getLayerName());
+             try {
+                 SimpleFeatureStore store = (SimpleFeatureStore) featureSource;
+                 store.setTransaction(transaction);
+                 store.removeFeatures(queryFilter);
+                 transaction.commit();
+             }catch (Exception ex){
+                 transaction.rollback();
+             }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new GeoException(e.fillInStackTrace());
+        }
+        return true;
     }
 
     @Override
-    public boolean queryGeometry(String layerName,GeoGeometryEntity geometryEntity) {
-        return false;
+    public List<GeoFeature> queryFeature(GeoQuery query) {
+        assert(query!=null && QueryGenerator.hasLayerName(query));
+        List<GeoFeature> result=new ArrayList<>();
+        try {
+            SimpleFeatureSource featureSource= mDataStore.getFeatureSource(query.getLayerName());
+            if(featureSource==null){
+                throw new GeoException("图层不存在");
+            }
+            SimpleFeatureType schema = featureSource.getSchema();
+            Query readQuery= QueryGenerator.toQuery(query);
+            FeatureReader<SimpleFeatureType, SimpleFeature> reader =mDataStore.getFeatureReader(readQuery, Transaction.AUTO_COMMIT);
+            Map<String,Object> proMap=new HashMap<>();
+            while (reader.hasNext()) {
+                SimpleFeature next = reader.next();
+                GeoFeature featureEntity=new GeoFeature();
+                Iterator<Property> pit= next.getProperties().iterator();
+
+                while (pit.hasNext()){
+                    Property pr= pit.next();
+                    proMap.put(pr.getName().getLocalPart(),pr.getValue());
+                }
+                featureEntity.setProperties(proMap);
+                Object geom=next.getDefaultGeometry();
+                if(geom!=null && geom instanceof Geometry) {
+                    featureEntity.setGeometry((Geometry)geom);
+                }
+                featureEntity.setName(next.getDefaultGeometryProperty().getName().getLocalPart());
+                result.add(featureEntity);
+            }
+            reader.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new GeoException(e.fillInStackTrace());
+        }
+        return result;
     }
 
-//    private SimpleFeature toSimpleFeature(SimpleFeature next,GeoGeometryEntity geometryEntity){
-//       Map<String,Object> attrs=geometryEntity.getAttributes();
-//       next.setAttributes(geometryEntity.getAttributes());
-//    }
 }
