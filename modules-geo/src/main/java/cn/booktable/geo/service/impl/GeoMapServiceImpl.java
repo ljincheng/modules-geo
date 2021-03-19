@@ -25,6 +25,7 @@ public class GeoMapServiceImpl implements GeoMapService {
 
     private  GeoMapContent map=null;
     private GeoMapProvider mMapProvider=null;
+    private boolean openCache=true;
 
    {
        mMapProvider=GeoMapProvider.instance();

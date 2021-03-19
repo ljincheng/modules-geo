@@ -3,6 +3,7 @@ package cn.booktable.appadmin.controller.geo;
 import cn.booktable.core.view.JsonView;
 import cn.booktable.geo.core.GeoFeature;
 import cn.booktable.geo.core.GeoFeatureRequest;
+import cn.booktable.geo.core.GeoQuery;
 import cn.booktable.geo.core.PaintParam;
 import cn.booktable.geo.provider.GeoGeometryProvider;
 import cn.booktable.geo.provider.TileModelProvider;
@@ -65,7 +66,7 @@ public class GeoMapController {
      * @param response
      */
     @RequestMapping("/fs")
-    public JsonView<Object> fs(HttpServletRequest request, HttpServletResponse response, String layerName, String type, String geometry, Map<String,Object> properties){
+    public JsonView<Object> fs(HttpServletRequest request, HttpServletResponse response, String layerName, String type, String geometry, Map<String,Object> properties,String filter){
         JsonView<Object> result=new JsonView<>();
         try {
             GeoFeatureRequest freq=new GeoFeatureRequest();
@@ -77,6 +78,8 @@ public class GeoMapController {
                 feature.setProperties(properties);
             }
             freq.setFeature(feature);
+            GeoQuery geoQuery=new GeoQuery();
+            freq.setQuery(geoQuery);
             AssertUtils.isNotBlank(freq.getType(),"操作类型为能不空");
             if(GeoRequestUtils.TYPE_ADD.equals(freq.getType())) {
                 AssertUtils.notNull(freq.getFeature(),"图形不能为空");
@@ -89,7 +92,7 @@ public class GeoMapController {
                    result.setCode(JsonView.CODE_FAILE);
                    result.setMsg("失败");
                }
-            }else if(GeoRequestUtils.TYPE_UPDATE.equals(freq)){
+            }else if(GeoRequestUtils.TYPE_UPDATE.equals(freq.getType())){
                 AssertUtils.notNull(freq.getFeature(),"图形不能为空");
                 AssertUtils.notNull(freq.getQuery(),"查询条件不能为空");
                 AssertUtils.isNotBlank(freq.getLayerName(),"图层不能为空");
@@ -102,7 +105,7 @@ public class GeoMapController {
                     result.setCode(JsonView.CODE_FAILE);
                     result.setMsg("失败");
                 }
-            }else if(GeoRequestUtils.TYPE_DELETE.equals(freq)){
+            }else if(GeoRequestUtils.TYPE_DELETE.equals(freq.getType())){
                 AssertUtils.notNull(freq.getQuery(),"查询条件不能为空");
                 AssertUtils.isNotBlank(freq.getLayerName(),"图层不能为空");
                 freq.getQuery().setLayerName(freq.getLayerName());
@@ -114,10 +117,11 @@ public class GeoMapController {
                     result.setCode(JsonView.CODE_FAILE);
                     result.setMsg("失败");
                 }
-            }else if(GeoRequestUtils.TYPE_QUERY.equals(freq)){
+            }else if(GeoRequestUtils.TYPE_QUERY.equals(freq.getType())){
                 AssertUtils.notNull(freq.getQuery(),"查询条件不能为空");
                 AssertUtils.isNotBlank(freq.getLayerName(),"图层不能为空");
                 freq.getQuery().setLayerName(freq.getLayerName());
+                freq.getQuery().setFilter(filter);
                 List<GeoFeature> res= mGeoFeatureService.queryFeature(freq.getQuery());
                     result.setCode(JsonView.CODE_SUCCESS);
                     result.setMsg("OK");

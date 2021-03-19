@@ -64,5 +64,23 @@
                               [B]<a id="testB" style="position: relative;"></a>
                               [C]<a id="testC"></a>
       </div>
+
+      <div style="position: absolute; right: 0px; width: 450px; height: 300px;">
+      <form id="form1" method="post" action="http://localhost:8080/apps/geo/map/fs">
+          <div><label>LayerName</label><input type="text" name="layerName" value="geo_parking_polygon"></div>
+          <div><label>Type</label><select name="type">
+              <option value="add">add</option>
+              <option value="query">query</option>
+              <option value="update">update</option>
+              <option value="delete">delete</option>
+          </select> </div>
+          <div><label>过滤条件</label><input type="text" name="filter" style="width: 400px;"></div>
+          <div><label>Geometry</label><input type="text" id="geometryTxt" name="geometry"></div>
+          <div><label>building_id</label><input type="text" name="properties['building_id']" value="b009"></div>
+          <div><label>parking_no</label><input type="text" name="properties['parking_no']" value="车位XX00"></div>
+          <input type="submit" value="提交">
+      </form>
+
+  </div>
   </body>
 </html>

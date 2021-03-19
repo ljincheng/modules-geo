@@ -32,11 +32,12 @@ function addFeature(param) {
             }
         }
     }
+    document.getElementById("geometryTxt").value=geom;
     // var req={"type":"add","layerName":"geo_parking_polygon","feature":{"geometry":"\""+geom+"\"","properties":{"building_id":"b009","parking_no":"车位XX00"}}};
     // var req={"type":"add","layerName":"geo_parking_polygon","feature":{"geometry":"\""+geom+"\""}};
-    var req={"type":"add","layerName":"geo_parking_polygon","geometry":geom,"properties":{"building_id":"b009","parking_no":"车位XX00"}};
+ //   var req={"type":"add","layerName":"geo_parking_polygon","geometry":geom,"properties":{"building_id":"b009","parking_no":"车位XX00"}};
     // alert(req);
-    reqSend("http://localhost:8080/apps/geo/map/fs",req);
+   // reqSend("http://localhost:8080/apps/geo/map/fs",req);
 }
 
 function reqSend(url,data){
