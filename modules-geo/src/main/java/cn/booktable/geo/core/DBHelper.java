@@ -24,8 +24,8 @@ public class DBHelper {
         params.put("port", 3306);
 //        params.put("schema", "public");
         params.put("database", "geotools");
-        params.put("user", "root");
-        params.put("passwd", "");
+        params.put("user", "dev");
+        params.put("passwd", "dev123");
         mDBParam=params;
         try {
             mDataStore = (JDBCDataStore) DataStoreFinder.getDataStore(mDBParam);
