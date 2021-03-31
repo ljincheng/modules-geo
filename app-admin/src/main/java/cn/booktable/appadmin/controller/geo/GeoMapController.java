@@ -16,6 +16,7 @@ import cn.booktable.util.AssertUtils;
 import cn.booktable.util.StringUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -66,8 +67,9 @@ public class GeoMapController {
      * @param response
      */
     @RequestMapping("/fs")
-    public JsonView<Object> fs(HttpServletRequest request, HttpServletResponse response, String layerName, String type, String geometry, Map<String,Object> properties,String filter){
-        JsonView<Object> result=new JsonView<>();
+    @ResponseBody
+    public JsonView<List<GeoFeature>> fs(HttpServletRequest request, HttpServletResponse response, String layerName, String type, String geometry, Map<String,Object> properties,String filter){
+        JsonView<List<GeoFeature>> result=new JsonView<>();
         try {
             GeoFeatureRequest freq=new GeoFeatureRequest();
             freq.setType(type);

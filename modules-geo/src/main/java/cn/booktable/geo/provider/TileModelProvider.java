@@ -45,6 +45,10 @@ public class TileModelProvider {
         double ymax=origin.y - row*tileSize*res[1];
         double xmax=xmin+res[0]*tileSize;
         double ymin=ymax-res[1]*tileSize;
+//        double xmin=cell*tileSize*res[0] + origin.x;
+//        double ymin=origin.y + row*tileSize*res[1];
+//        double xmax=xmin+res[0]*tileSize;
+//        double ymax=ymin+res[1]*tileSize;
         ReferencedEnvelope mapBounds =new ReferencedEnvelope(xmin,xmax,ymin,ymax, null);
         return mapBounds;
     }
