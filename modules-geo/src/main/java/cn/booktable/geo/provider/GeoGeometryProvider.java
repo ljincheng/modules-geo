@@ -21,14 +21,15 @@ public class GeoGeometryProvider {
     }
 
     public static Geometry getGeometry(GeoFeature feature){
-        Object geom= feature.getGeometry();
+        String geom= feature.getGeometry();
         if(geom!=null){
-            if(geom instanceof String){
-                return parser((String)geom);
-            }else {
-                return (Geometry)geom;
-            }
+//            if(geom instanceof String){
+                return parser(geom);
+//            }else {
+//                return (Geometry)geom;
+//            }
         }
+
         return null;
     }
 }

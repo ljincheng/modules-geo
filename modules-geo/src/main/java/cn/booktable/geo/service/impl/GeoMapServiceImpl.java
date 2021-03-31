@@ -56,7 +56,7 @@ public class GeoMapServiceImpl implements GeoMapService {
            GeoImageCacheEntity imageCacheEntity=new GeoImageCacheEntity();
            imageCacheEntity.setImageId(param.getMapId());
            imageCacheEntity.setCacheId(param.getMapId()+"-"+param.getArea()+"-"+param.getBbox()+"-"+param.getFormat());
-           GeoImageCacheEntity imageCache= mMapProvider.cacheService().findCache(imageCacheEntity.getCacheId());
+           GeoImageCacheEntity imageCache=mMapProvider.cacheService().findCache(imageCacheEntity.getCacheId());
            if(imageCache==null || imageCache.getImageData().length()==0) {
                ReferencedEnvelope mapBounds = new ReferencedEnvelope(minx, maxx, miny, maxy, DefaultGeographicCRS.WGS84);
                Rectangle imageBounds = new Rectangle(0, 0, w, h);

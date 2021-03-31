@@ -10,6 +10,7 @@ import cn.booktable.geo.service.GeoFeatureService;
 import org.geotools.data.*;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.simple.SimpleFeatureStore;
+import org.geotools.geojson.feature.FeatureJSON;
 import org.locationtech.jts.geom.Geometry;
 import org.opengis.feature.Property;
 import org.opengis.feature.simple.SimpleFeature;
@@ -18,6 +19,7 @@ import org.opengis.feature.type.AttributeDescriptor;
 import org.opengis.feature.type.GeometryDescriptor;
 import org.opengis.filter.Filter;
 
+import java.io.ByteArrayOutputStream;
 import java.util.*;
 
 /**
@@ -153,9 +155,13 @@ public class GeoFeatureServiceImpl implements GeoFeatureService {
             Query readQuery= QueryGenerator.toQuery(query);
             FeatureReader<SimpleFeatureType, SimpleFeature> reader =mDataStore.getFeatureReader(readQuery, Transaction.AUTO_COMMIT);
             Map<String,Object> proMap=new HashMap<>();
+            FeatureJSON fj = new FeatureJSON();
             while (reader.hasNext()) {
                 SimpleFeature next = reader.next();
+
+
                 GeoFeature featureEntity=new GeoFeature();
+
                 Iterator<Property> pit= next.getProperties().iterator();
 
                 while (pit.hasNext()){
@@ -175,7 +181,45 @@ public class GeoFeatureServiceImpl implements GeoFeatureService {
             e.printStackTrace();
             throw new GeoException(e.fillInStackTrace());
         }
+
         return result;
     }
 
+
+    @Override
+    public void writeFeature(GeoQuery query, Object output){
+        assert(query!=null && QueryGenerator.hasLayerName(query));
+//        List<SimpleFeature> result=new ArrayList<>();
+        try {
+            SimpleFeatureSource featureSource= mDataStore.getFeatureSource(query.getLayerName());
+            if(featureSource==null){
+                throw new GeoException("图层不存在");
+            }
+            SimpleFeatureType schema = featureSource.getSchema();
+            Query readQuery= QueryGenerator.toQuery(query);
+            FeatureReader<SimpleFeatureType, SimpleFeature> reader =mDataStore.getFeatureReader(readQuery, Transaction.AUTO_COMMIT);
+            Map<String,Object> proMap=new HashMap<>();
+
+            FeatureJSON fj = new FeatureJSON();
+            while (reader.hasNext()) {
+                SimpleFeature next = reader.next();
+                fj.writeFeature(next,output);
+//                result.add(next);
+            }
+            reader.close();
+
+//            ByteArrayOutputStream os = new ByteArrayOutputStream();
+//            fj.writeFeatureCollection(result, os);
+//            String json = os.toString();
+//            GeoFeature featureEntity=new GeoFeature();
+//            featureEntity.setJson(json);
+//            Iterator<Property> pit= next.getProperties().iterator();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new GeoException(e.fillInStackTrace());
+        }
+
+
+    }
 }

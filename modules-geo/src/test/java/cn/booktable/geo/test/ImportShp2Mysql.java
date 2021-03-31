@@ -137,7 +137,7 @@ public class ImportShp2Mysql {
 
     //测试代码
     public static void main(String[] args) {
-        JDBCDataStore connnection2mysql = ImportShp2Mysql.connnection2mysql("localhost", "geotools", 3306, "root", "");
+        JDBCDataStore connnection2mysql = ImportShp2Mysql.connnection2mysql("localhost", "geotools", 3306, "dev", "dev123");
         SimpleFeatureSource featureSource = readSHP("/workspace/github/geotools/data/ne_50m_admin_0_countries/ne_50m_admin_0_countries.shp");
         JDBCDataStore ds = createTable(connnection2mysql, featureSource);
         writeShp2Mysql(ds, featureSource);

@@ -25,6 +25,7 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.awt.image.BufferedImage;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 
@@ -124,6 +125,7 @@ public class GeoMapController {
                 AssertUtils.isNotBlank(freq.getLayerName(),"图层不能为空");
                 freq.getQuery().setLayerName(freq.getLayerName());
                 freq.getQuery().setFilter(filter);
+//                mGeoFeatureService.writeFeature(freq.getQuery(),response.getOutputStream());
                 List<GeoFeature> res= mGeoFeatureService.queryFeature(freq.getQuery());
                     result.setCode(JsonView.CODE_SUCCESS);
                     result.setMsg("OK");
@@ -134,6 +136,42 @@ public class GeoMapController {
         }
         return result;
     }
+
+
+    @RequestMapping("/query")
+    @ResponseBody
+    public String query(HttpServletRequest request, HttpServletResponse response, String layerName, String type, String geometry, Map<String,Object> properties,String filter){
+        try {
+            GeoFeatureRequest freq=new GeoFeatureRequest();
+            freq.setType(type);
+            freq.setLayerName(layerName);
+            GeoFeature feature=new GeoFeature();
+            feature.setGeometry(geometry);
+            if(properties!=null){
+                feature.setProperties(properties);
+            }
+            freq.setFeature(feature);
+            GeoQuery geoQuery=new GeoQuery();
+            freq.setQuery(geoQuery);
+            AssertUtils.isNotBlank(freq.getType(),"操作类型为能不空");
+
+            AssertUtils.notNull(freq.getQuery(),"查询条件不能为空");
+            AssertUtils.isNotBlank(freq.getLayerName(),"图层不能为空");
+            freq.getQuery().setLayerName(freq.getLayerName());
+            freq.getQuery().setFilter(filter);
+            OutputStream outputStream=response.getOutputStream();
+            mGeoFeatureService.writeFeature(freq.getQuery(),outputStream);
+            outputStream.flush();
+
+        }catch (Exception ex){
+            ex.printStackTrace();
+            return ex.getMessage();
+        }
+        return null;
+
+    }
+
+
 
     /**
      * 瓦片

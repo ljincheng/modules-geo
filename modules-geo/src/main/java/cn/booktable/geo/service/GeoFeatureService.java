@@ -2,6 +2,7 @@ package cn.booktable.geo.service;
 
 import cn.booktable.geo.core.GeoQuery;
 import cn.booktable.geo.core.GeoFeature;
+import org.geotools.feature.FeatureCollection;
 import org.locationtech.jts.geom.Geometry;
 
 import java.util.List;
@@ -39,4 +40,6 @@ public interface GeoFeatureService {
     boolean deleteFeature(GeoQuery query);
 
     List<GeoFeature> queryFeature(GeoQuery query);
+
+     void writeFeature(GeoQuery query, Object output);
 }

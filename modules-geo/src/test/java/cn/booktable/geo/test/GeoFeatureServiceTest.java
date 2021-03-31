@@ -34,7 +34,7 @@ public class GeoFeatureServiceTest {
 
         GeoFeature geometryEntity=new GeoFeature();
         Polygon geom=new GeometryFactory().createPolygon(new Coordinate[]{new Coordinate(-10,0),new Coordinate(-10,100),new Coordinate(100,100),new Coordinate(100,0),new Coordinate(-10,0)});
-        geometryEntity.setGeometry(geom);
+//        geometryEntity.setGeometry(geom);
         geometryEntity.setType("polygon");
         Map<String,Object> attr=new HashMap<>();
         attr.put("building_id","b007");
@@ -51,7 +51,7 @@ public class GeoFeatureServiceTest {
         query.setFilter(" building_id='b007' ");
         GeoFeature geometryEntity=new GeoFeature();
         Polygon geom=new GeometryFactory().createPolygon(new Coordinate[]{new Coordinate(-10,0),new Coordinate(-10,100),new Coordinate(120,100),new Coordinate(100,0),new Coordinate(-10,0)});
-        geometryEntity.setGeometry(geom);
+//        geometryEntity.setGeometry(geom);
         geometryEntity.setType("polygon");
         Map<String,Object> attr=new HashMap<>();
         attr.put("building_id","b008");
