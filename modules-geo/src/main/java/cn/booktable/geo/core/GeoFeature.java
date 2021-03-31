@@ -15,7 +15,7 @@ public class GeoFeature {
     private String id;
     private String type;
     private String name;
-    private Object geometry;//几何数据
+    private String geometry;//几何数据
     private Map<String,Object> properties=new HashMap<>();
 
 

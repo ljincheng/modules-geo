@@ -49,7 +49,7 @@ public class GeoFeatureServiceImpl implements GeoFeatureService {
             GeoFeature geometryEntity=new GeoFeature();
             geometryEntity.setProperties(properties);
             geometryEntity.setName(descriptor.getName().toString());
-            geometryEntity.setGeometry(geometry);
+            geometryEntity.setGeometry(geometry.toString());
             return geometryEntity;
         }catch (Exception ex){
             throw new GeoException(ex);
@@ -165,7 +165,7 @@ public class GeoFeatureServiceImpl implements GeoFeatureService {
                 featureEntity.setProperties(proMap);
                 Object geom=next.getDefaultGeometry();
                 if(geom!=null && geom instanceof Geometry) {
-                    featureEntity.setGeometry((Geometry)geom);
+                    featureEntity.setGeometry(((Geometry)geom).toString());
                 }
                 featureEntity.setName(next.getDefaultGeometryProperty().getName().getLocalPart());
                 result.add(featureEntity);
