@@ -15,4 +15,6 @@ public interface GeoMapManageService {
 
    GeoMapInfoEntity findBaseMapInfo(String mapId);
 
+   GeoMapLayerEntity queryMapLayersByLayerId(String mapId,String layerId);
+
 }

@@ -5,8 +5,10 @@ import cn.booktable.geo.core.GeoException;
 import cn.booktable.geo.core.GeoQuery;
 import cn.booktable.geo.core.GeoFeature;
 import cn.booktable.geo.core.QueryGenerator;
+import cn.booktable.geo.entity.GeoMapLayerEntity;
 import cn.booktable.geo.provider.GeoGeometryProvider;
 import cn.booktable.geo.service.GeoFeatureService;
+import cn.booktable.geo.service.GeoMapManageService;
 import org.geotools.data.*;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.simple.SimpleFeatureStore;
@@ -26,6 +28,7 @@ import java.util.*;
  * @author ljc
  */
 public class GeoFeatureServiceImpl implements GeoFeatureService {
+    GeoMapManageService geoMapManageService=new GeoMapManageServiceImpl();
 
     private DataStore  mDataStore;
     {
@@ -191,22 +194,37 @@ public class GeoFeatureServiceImpl implements GeoFeatureService {
         assert(query!=null && QueryGenerator.hasLayerName(query));
 //        List<SimpleFeature> result=new ArrayList<>();
         try {
-            SimpleFeatureSource featureSource= mDataStore.getFeatureSource(query.getLayerName());
+            GeoMapLayerEntity mapLayerEntity= geoMapManageService.queryMapLayersByLayerId(query.getMapId(),query.getLayerId());
+            if(mapLayerEntity==null || mapLayerEntity.getLayerInfoEntity()==null && QueryGenerator.hasFilter(query)){
+                return ;
+            }
+            SimpleFeatureSource featureSource= mDataStore.getFeatureSource(mapLayerEntity.getLayerInfoEntity().getLayerName());
             if(featureSource==null){
                 throw new GeoException("图层不存在");
             }
+            Object filter=query.getFilter();
+            String layerFilter= mapLayerEntity.getLayerInfoEntity().getLayerFilter();
+            if(layerFilter!=null && layerFilter.trim().length()>0){
+                filter= ((String)filter)+" and "+layerFilter;
+            }
+
+            query.setFilter(filter);
+            query.setLayerName(mapLayerEntity.getLayerInfoEntity().getLayerName());
             SimpleFeatureType schema = featureSource.getSchema();
             Query readQuery= QueryGenerator.toQuery(query);
-            FeatureReader<SimpleFeatureType, SimpleFeature> reader =mDataStore.getFeatureReader(readQuery, Transaction.AUTO_COMMIT);
+//            FeatureReader<SimpleFeatureType, SimpleFeature> reader =mDataStore.getFeatureReader(readQuery, Transaction.AUTO_COMMIT);
             Map<String,Object> proMap=new HashMap<>();
-
-            FeatureJSON fj = new FeatureJSON();
-            while (reader.hasNext()) {
-                SimpleFeature next = reader.next();
-                fj.writeFeature(next,output);
-//                result.add(next);
+            DefaultFeatureResults results = new DefaultFeatureResults(featureSource, readQuery);
+            if(results.getCount()>0) {
+                FeatureJSON fj = new FeatureJSON();
+                fj.writeFeatureCollection(results.collection(), output);
             }
-            reader.close();
+//            while (reader.hasNext()) {
+//                SimpleFeature next = reader.next();
+//                fj.writeFeature(next,output);
+////                result.add(next);
+//            }
+//            reader.close();
 
 //            ByteArrayOutputStream os = new ByteArrayOutputStream();
 //            fj.writeFeatureCollection(result, os);

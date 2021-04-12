@@ -9,6 +9,8 @@ import org.apache.commons.lang3.StringUtils;
 @Data
 public class GeoQuery {
 
+    private String mapId;
+    private String layerId;
     private String layerName;
     private Object filter;
 

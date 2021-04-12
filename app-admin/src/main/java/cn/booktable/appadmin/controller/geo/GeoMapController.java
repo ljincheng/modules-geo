@@ -204,37 +204,6 @@ public class GeoMapController {
         }
     }
 
-    /**
-     * 获取地图
-     * @param id 地图ID
-     * @return
-     */
-    @RequestMapping("/map/{id}")
-    public JsonView<GeoMapInfoEntity> mapInfo(@PathVariable("id") String id,HttpServletRequest request,HttpServletResponse response){
-        JsonView<GeoMapInfoEntity> view=new JsonView<>();
-        try {
 
-            String token=request.getHeader("token");
-            if(StringUtils.isBlank(token) || !token.equals("test001")){
-                view.setMsg("身份验证失败");
-                view.setCode(JsonView.CODE_FAILE);
-                return view;
-            }
-            response.setHeader("token",token);
-            GeoMapInfoEntity mapInfoEntity = geoMapManageService.findBaseMapInfo(id);
-            if(mapInfoEntity!=null){
-                view.setData(mapInfoEntity);
-                view.setCode(JsonView.CODE_SUCCESS);
-            }else{
-                view.setMsg("找不到数据");
-                view.setCode(JsonView.CODE_FAILE);
-            }
-        }catch (Exception ex){
-            logger.error("获取地图异常",ex);
-            view.setMsg("获取数据异常");
-            view.setCode(JsonView.CODE_FAILE);
-        }
-        return view;
-    }
 
 }
