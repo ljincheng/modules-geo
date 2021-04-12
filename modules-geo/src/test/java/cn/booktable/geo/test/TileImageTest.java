@@ -34,7 +34,7 @@ public class TileImageTest {
         System.out.println("======================\r\n"+info);
     }
 
-    @Test
+   // @Test
     public void testTileWrite(){
         testBbox(2,2,1);
         String bbox=TileModelProvider.instance().bbox(2,2,1);

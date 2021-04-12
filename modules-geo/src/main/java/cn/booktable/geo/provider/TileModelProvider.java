@@ -50,6 +50,12 @@ public class TileModelProvider {
 //        double xmax=xmin+res[0]*tileSize;
 //        double ymin=ymax-res[1]*tileSize;
 
+        /**
+         *   var cell = Math.floor((min.x - o.x) / res.x / tsize);
+         *         var row = Math.floor((o.y - min.y) / res.y / tsize);
+         *         var left = -(min.x - o.x) / res.x +tsize * cell ;
+         *         var top = -(o.y - min.y) / res.y +tsize * row;
+         */
 //        double[] res=resolution(z);
         double xmin=cell*tileSize*res[0] + origin.x;
         double ymax=origin.y - row*tileSize*res[1];

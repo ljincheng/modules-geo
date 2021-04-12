@@ -19,7 +19,7 @@ import org.opengis.filter.temporal.TEquals;
 public class DataFilterTest {
 
     //点上的面数据。
-    @Test
+    //@Test
     public void testContainsFilter() throws Exception {
 
         FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);

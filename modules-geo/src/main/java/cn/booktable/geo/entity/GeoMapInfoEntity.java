@@ -21,6 +21,12 @@ public class GeoMapInfoEntity {
     private String mapId;
     private String title;
     private String bbox;
+    private Integer zoom;
+    private Integer minZoom;
+    private Integer maxZoom;
+    private String center;
+    private String mapUrl;
+    private String mapConfig;
     private Date createTime;
     private Date updateTime;
 

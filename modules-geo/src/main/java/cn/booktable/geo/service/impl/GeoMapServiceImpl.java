@@ -8,6 +8,7 @@ import cn.booktable.geo.service.GeoMapManageService;
 import cn.booktable.geo.service.GeoMapService;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -17,27 +18,41 @@ import java.io.OutputStream;
 import java.util.Base64;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author ljc
  */
 public class GeoMapServiceImpl implements GeoMapService {
 
-    private  GeoMapContent map=null;
+//    private  GeoMapContent map=null;
     private GeoMapProvider mMapProvider=null;
+    public static Map<String,GeoMapContent> mMapContentMap=new HashMap<>();
     private boolean openCache=true;
 
    {
        mMapProvider=GeoMapProvider.instance();
-        map=new GeoMapContent(mMapProvider);
+//        map=new GeoMapContent(mMapProvider);
     }
 
     @Override
     public void clearCache() {
-        map.cleanCache();
+        for(String mapId: mMapContentMap.keySet()){
+            GeoMapContent map=mMapContentMap.get(mapId);
+            map.cleanCache();
+        }
     }
 
 
+    private GeoMapContent getMapContentByMapId(String mapId){
+        GeoMapContent map= mMapContentMap.get(mapId);
+        if(map==null){
+            map=new GeoMapContent(mMapProvider);
+            mMapContentMap.put(mapId,map);
+        }
+        return map;
+    }
     @Override
     public void paint(PaintParam param, OutputStream output) {
        try {
@@ -61,6 +76,7 @@ public class GeoMapServiceImpl implements GeoMapService {
                ReferencedEnvelope mapBounds = new ReferencedEnvelope(minx, maxx, miny, maxy, DefaultGeographicCRS.WGS84);
                Rectangle imageBounds = new Rectangle(0, 0, w, h);
 
+               GeoMapContent map= getMapContentByMapId(param.getMapId());
                map.addLayers(param.getMapId());
                GeoRenderingContext renderer = new GeoRenderingContext();
                renderer.setMapContent(map);

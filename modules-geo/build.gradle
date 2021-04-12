@@ -23,6 +23,7 @@ dependencies {
     implementation "org.geotools:gt-wms:${geotoolsVersion}"
     implementation "org.geotools:gt-swing:${geotoolsVersion}"
     implementation "org.geotools:gt-geojson:${geotoolsVersion}"
+    implementation "org.geotools:gt-geotiff:${geotoolsVersion}"
 
     implementation 'org.projectlombok:lombok:1.18.16'
     implementation "cn.booktable:booktable-common:${booktableVersion}"

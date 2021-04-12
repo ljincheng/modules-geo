@@ -29,7 +29,7 @@ public class GeoFeatureServiceTest {
 
 
     private String mLayerName="geo_parking_polygon";
-    @Test
+    //@Test
     public void testWriter(){
 
         GeoFeature geometryEntity=new GeoFeature();
@@ -44,7 +44,7 @@ public class GeoFeatureServiceTest {
         featureService.addFeature(mLayerName,geometryEntity);
     }
 
-    @Test
+    //@Test
     public void testUpdate(){
 
         GeoQuery query=new GeoQuery();
@@ -62,7 +62,7 @@ public class GeoFeatureServiceTest {
         featureService.updateFeature(query,geometryEntity);
     }
 
-    @Test
+    //@Test
     public void testDelete(){
         GeoQuery query=new GeoQuery();
         query.setLayerName(mLayerName);
@@ -71,7 +71,7 @@ public class GeoFeatureServiceTest {
         featureService.deleteFeature(query);
     }
 
-    @Test
+    //@Test
     public void testQuery(){
         GeoQuery query=new GeoQuery();
         query.setLayerName(mLayerName);
@@ -84,7 +84,7 @@ public class GeoFeatureServiceTest {
         }
     }
 
-    @Test
+   // @Test
     public void testEmptyGeomEntity(){
         GeoFeatureService featureService=new GeoFeatureServiceImpl();
         GeoFeature geometryEntity= featureService.createGeometry(mLayerName,null);

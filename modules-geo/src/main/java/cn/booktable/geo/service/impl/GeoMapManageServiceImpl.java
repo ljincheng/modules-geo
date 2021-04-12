@@ -3,6 +3,7 @@ package cn.booktable.geo.service.impl;
 import cn.booktable.geo.core.DBHelper;
 import cn.booktable.geo.core.GeoException;
 import cn.booktable.geo.entity.GeoLayerInfoEntity;
+import cn.booktable.geo.entity.GeoMapInfoEntity;
 import cn.booktable.geo.entity.GeoMapLayerEntity;
 import cn.booktable.geo.entity.GeoStyleInfoEntity;
 import cn.booktable.geo.service.GeoMapManageService;
@@ -22,8 +23,9 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
     @Override
     public List<GeoMapLayerEntity> fullMapLayersByMapId(String mapId) {
         Connection conn= DBHelper.getConnection();
-        List<GeoMapLayerEntity> mapInfoList=mapLayerListByMapId(conn,mapId);
+        List<GeoMapLayerEntity> mapInfoList=null;
         try{
+//            mapInfoList=mapLayerListByMapId(conn,mapId);
             mapInfoList=mapLayerFullColumnListByMapId(conn,mapId);
         }catch (Exception ex){
             throw new GeoException(ex);
@@ -31,6 +33,50 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
             DBHelper.close(conn);
         }
         return mapInfoList;
+    }
+
+    @Override
+    public GeoMapInfoEntity findBaseMapInfo(String mapId) {
+        Connection conn= DBHelper.getConnection();
+        GeoMapInfoEntity mapInfoEntity=null;
+        try{
+            mapInfoEntity=findMapInfoEntity(conn,mapId);
+        }catch (Exception ex){
+            throw new GeoException(ex);
+        }finally {
+            DBHelper.close(conn);
+        }
+        return mapInfoEntity;
+    }
+
+    private GeoMapInfoEntity findMapInfoEntity(Connection conn,String mapId){
+        GeoMapInfoEntity mapInfoEntity=null;
+        String sql="SELECT map_id, title, bbox,zoom,min_zoom,max_zoom,center,map_url,map_config, create_time, update_time FROM geo_map_info WHERE  map_id=?";
+        PreparedStatement ps=null;
+        try {
+            ps = conn.prepareStatement(sql);
+            ps.setString(1, mapId);
+            ResultSet res = ps.executeQuery();
+            while (res.next()) {
+                mapInfoEntity=new GeoMapInfoEntity();
+                mapInfoEntity.setMapId(res.getString(1));
+                mapInfoEntity.setTitle(res.getString(2));
+                mapInfoEntity.setBbox(res.getString(3));
+                mapInfoEntity.setZoom(res.getInt(4));
+                mapInfoEntity.setMinZoom(res.getInt(5));
+                mapInfoEntity.setMaxZoom(res.getInt(6));
+                mapInfoEntity.setCenter(res.getString(7));
+                mapInfoEntity.setMapUrl(res.getString(8));
+                mapInfoEntity.setMapConfig(res.getString(9));
+                mapInfoEntity.setCreateTime(res.getDate(10));
+                mapInfoEntity.setUpdateTime(res.getDate(11));
+            }
+        }catch (Exception ex){
+            throw new GeoException(ex);
+        }finally {
+            DBHelper.close(ps);
+        }
+        return mapInfoEntity;
     }
 
     private List<GeoMapLayerEntity> mapLayerFullColumnListByMapId(Connection conn, String mapId) {

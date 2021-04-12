@@ -5,15 +5,20 @@ import cn.booktable.geo.core.GeoFeature;
 import cn.booktable.geo.core.GeoFeatureRequest;
 import cn.booktable.geo.core.GeoQuery;
 import cn.booktable.geo.core.PaintParam;
+import cn.booktable.geo.entity.GeoMapInfoEntity;
 import cn.booktable.geo.provider.GeoGeometryProvider;
 import cn.booktable.geo.provider.TileModelProvider;
 import cn.booktable.geo.service.GeoFeatureService;
+import cn.booktable.geo.service.GeoMapManageService;
 import cn.booktable.geo.service.GeoMapService;
 import cn.booktable.geo.service.impl.GeoFeatureServiceImpl;
+import cn.booktable.geo.service.impl.GeoMapManageServiceImpl;
 import cn.booktable.geo.service.impl.GeoMapServiceImpl;
 import cn.booktable.geo.utils.GeoRequestUtils;
 import cn.booktable.util.AssertUtils;
 import cn.booktable.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -36,8 +41,10 @@ import java.util.Map;
 @Controller
 @RequestMapping("/geo/map/")
 public class GeoMapController {
+    private static Logger logger= LoggerFactory.getLogger(GeoMapController.class);
 
     GeoMapService mapService = new GeoMapServiceImpl();
+    GeoMapManageService geoMapManageService = new GeoMapManageServiceImpl();
     GeoFeatureService mGeoFeatureService=new GeoFeatureServiceImpl();
 
 
@@ -137,7 +144,6 @@ public class GeoMapController {
         return result;
     }
 
-
     @RequestMapping("/query")
     @ResponseBody
     public String query(HttpServletRequest request, HttpServletResponse response, String layerName, String type, String geometry, Map<String,Object> properties,String filter){
@@ -171,8 +177,6 @@ public class GeoMapController {
 
     }
 
-
-
     /**
      * 瓦片
      * @param request
@@ -181,12 +185,13 @@ public class GeoMapController {
      * @param x
      * @param y
      */
-    @RequestMapping("/image/{z}/{x}/{y}")
-    public void image(HttpServletRequest request, HttpServletResponse response,@PathVariable("z") Double z,@PathVariable("x") Double x,@PathVariable("y") Double y ){
+    @RequestMapping("/image/{mapId}/{z}/{x}/{y}.png")
+    public void image(HttpServletRequest request, HttpServletResponse response,@PathVariable("mapId") String mapId,@PathVariable("z") Double z,@PathVariable("x") Double x,@PathVariable("y") Double y ){
         PaintParam param=new PaintParam();
         try {
                 param.setFormat("png");
-                param.setMapId("T20210308-001");
+                param.setMapId(mapId);
+//                param.setMapId("T20210308-001");
                 param.setArea("256,256");
            String bbox= TileModelProvider.instance().bbox(z,x,y);
                 param.setBbox(bbox);
@@ -198,4 +203,38 @@ public class GeoMapController {
             ex.printStackTrace();
         }
     }
+
+    /**
+     * 获取地图
+     * @param id 地图ID
+     * @return
+     */
+    @RequestMapping("/map/{id}")
+    public JsonView<GeoMapInfoEntity> mapInfo(@PathVariable("id") String id,HttpServletRequest request,HttpServletResponse response){
+        JsonView<GeoMapInfoEntity> view=new JsonView<>();
+        try {
+
+            String token=request.getHeader("token");
+            if(StringUtils.isBlank(token) || !token.equals("test001")){
+                view.setMsg("身份验证失败");
+                view.setCode(JsonView.CODE_FAILE);
+                return view;
+            }
+            response.setHeader("token",token);
+            GeoMapInfoEntity mapInfoEntity = geoMapManageService.findBaseMapInfo(id);
+            if(mapInfoEntity!=null){
+                view.setData(mapInfoEntity);
+                view.setCode(JsonView.CODE_SUCCESS);
+            }else{
+                view.setMsg("找不到数据");
+                view.setCode(JsonView.CODE_FAILE);
+            }
+        }catch (Exception ex){
+            logger.error("获取地图异常",ex);
+            view.setMsg("获取数据异常");
+            view.setCode(JsonView.CODE_FAILE);
+        }
+        return view;
+    }
+
 }
