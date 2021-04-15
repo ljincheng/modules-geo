@@ -5,9 +5,12 @@ import cn.booktable.geo.core.GeoFeature;
 import cn.booktable.geo.core.GeoFeatureRequest;
 import cn.booktable.geo.core.GeoQuery;
 import cn.booktable.geo.entity.GeoMapInfoEntity;
+import cn.booktable.geo.provider.GeoGeometryProvider;
+import cn.booktable.geo.service.GeoCacheService;
 import cn.booktable.geo.service.GeoFeatureService;
 import cn.booktable.geo.service.GeoMapManageService;
 import cn.booktable.geo.service.GeoMapService;
+import cn.booktable.geo.service.impl.GeoCacheServiceImpl;
 import cn.booktable.geo.service.impl.GeoFeatureServiceImpl;
 import cn.booktable.geo.service.impl.GeoMapManageServiceImpl;
 import cn.booktable.geo.service.impl.GeoMapServiceImpl;
@@ -16,13 +19,13 @@ import cn.booktable.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -37,6 +40,7 @@ public class GeoWMSController {
     GeoMapService mapService = new GeoMapServiceImpl();
     GeoMapManageService geoMapManageService = new GeoMapManageServiceImpl();
     GeoFeatureService mGeoFeatureService=new GeoFeatureServiceImpl();
+    GeoCacheService geoCacheService=new GeoCacheServiceImpl();
 
     /**
      * 获取地图
@@ -71,9 +75,18 @@ public class GeoWMSController {
         return view;
     }
 
-    @RequestMapping("/pointQuery/{mapId}")
+    /**
+     * 坐标查询
+     * @param request
+     * @param response
+     * @param mapId 地图ID
+     * @param layerId 图层ID
+     * @param p 坐标点
+     * @return
+     */
+    @RequestMapping("/coordQuery/{mapId}")
     @ResponseBody
-    public String pointQuery(HttpServletRequest request, HttpServletResponse response,@PathVariable("mapId") String mapId, String layerId, String type, String p){
+    public String coordQuery(HttpServletRequest request, HttpServletResponse response,@PathVariable("mapId") String mapId, String layerId, String p){
         try {
             AssertUtils.isNotBlank(p,"坐标不能为空");
             AssertUtils.isNotBlank(layerId,"图层不能为空");
@@ -89,22 +102,8 @@ public class GeoWMSController {
             }else if(split.length==4){
                 geoQuery.setFilter("BBOX(geom," + p+ ")");
             }else{
-                StringBuilder coords=new StringBuilder();
-                int i=0;
-                while (i < pointNum) {
-                    if(i==0){
-                        coords.append(split[i]).append(" ").append(split[i + 1]);
-                    }else {
-                        coords.append(",").append(split[i]).append(" ").append(split[i + 1]);
-                    }
-                    i = i + 2;
-                }
-                if(!(split[0].equals(split[pointNum-2]) && split[1].equals(split[pointNum-1]))){
-                    coords.append(",").append(split[0]).append(" ").append(split[1]);
-                }
-                geoQuery.setFilter("CONTAINS(geom,POLYGON((" + p+ ")))");
+                return null;
             }
-            AssertUtils.isNotBlank(geoQuery.getLayerId(),"图层ID不能为空");
             OutputStream outputStream=response.getOutputStream();
             mGeoFeatureService.writeFeature(geoQuery,outputStream);
             outputStream.flush();
@@ -116,26 +115,62 @@ public class GeoWMSController {
         return null;
     }
 
-    @RequestMapping("/rectQuery/{mapId}")
-    @ResponseBody
-    public String rectQuery(HttpServletRequest request, HttpServletResponse response,@PathVariable("mapId") String mapId, String layerId, String type, String p){
+    @RequestMapping("/addFeature/{mapId}")
+//    @ResponseBody
+    public JsonView<Boolean> addFeature(HttpServletRequest request, HttpServletResponse response,@PathVariable("mapId") String mapId, @RequestBody GeoFeature feature){
+        JsonView<Boolean> result=new JsonView<>();
         try {
-            AssertUtils.isNotBlank(p,"坐标不能为空");
-            AssertUtils.isNotBlank(layerId,"图层不能为空");
-            AssertUtils.isTrue(p.indexOf(",")>0,"坐标格式不正确");
-            GeoQuery geoQuery=new GeoQuery();
-            geoQuery.setLayerId(layerId);
-            geoQuery.setMapId(mapId);
-            geoQuery.setFilter("CONTAINS(geom,POINT("+p.replace(","," ")+"))");
-            AssertUtils.isNotBlank(geoQuery.getLayerId(),"图层ID不能为空");
-            OutputStream outputStream=response.getOutputStream();
-            mGeoFeatureService.writeFeature(geoQuery,outputStream);
-            outputStream.flush();
-
+            boolean res= mGeoFeatureService.addFeature(feature);
+            if(res){
+                GeoQuery geoQuery=new GeoQuery();
+                geoQuery.setFilter("BBOX(geom,"+GeoGeometryProvider.getBBoxString(feature.getGeometry())+")");
+                geoCacheService.deleteCache(geoQuery);
+                result.setCode(JsonView.CODE_SUCCESS);
+                result.setData(res);
+                return result;
+            }
+            result.setCode(JsonView.CODE_FAILE);
+            result.setMsg("操作失败");
         }catch (Exception ex){
             ex.printStackTrace();
-            return ex.getMessage();
+            result.setCode(JsonView.CODE_FAILE);
+            result.setMsg(ex.getMessage());
         }
-        return null;
+        return result;
+
+    }
+
+    @RequestMapping("/deleteFeature/{mapId}")
+    public JsonView<Integer> deleteFeature(HttpServletRequest request, HttpServletResponse response,@PathVariable("mapId") String mapId, @RequestBody GeoQueryBo queryBo){
+        JsonView<Integer> result=new JsonView<>();
+        try {
+            AssertUtils.isNotBlank(queryBo.getFeatureId(),"条件不能为空");
+            AssertUtils.isNotBlank(queryBo.getLayerId(),"图层不能为空");
+            GeoQuery query=new GeoQuery();
+            query.setMapId(mapId);
+            query.setLayerId(queryBo.getLayerId());
+            query.setFilter(queryBo.getFilter());
+            query.setFeatureId(queryBo.getFeatureId());
+           List<GeoFeature> featureList= mGeoFeatureService.queryFeature(query);
+            if(featureList!=null && featureList.size()>0){
+                mGeoFeatureService.deleteFeature(query);
+                for(GeoFeature feature:featureList) {
+                    GeoQuery geoQuery = new GeoQuery();
+                    geoQuery.setFilter("BBOX(geom," + GeoGeometryProvider.getBBoxString(feature.getGeometry()) + ")");
+                    geoCacheService.deleteCache(geoQuery);
+                }
+                result.setCode(JsonView.CODE_SUCCESS);
+                result.setData(featureList.size());
+                return result;
+            }
+            result.setCode(JsonView.CODE_FAILE);
+            result.setMsg("操作失败");
+        }catch (Exception ex){
+            ex.printStackTrace();
+            result.setCode(JsonView.CODE_FAILE);
+            result.setMsg(ex.getMessage());
+        }
+        return result;
+
     }
 }

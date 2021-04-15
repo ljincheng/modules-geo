@@ -11,8 +11,9 @@ public class GeoQuery {
 
     private String mapId;
     private String layerId;
-    private String layerName;
-    private Object filter;
+//    private String layerName;
+    private String filter;
+    private String featureId;
 
 
 }

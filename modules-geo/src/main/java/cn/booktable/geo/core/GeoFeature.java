@@ -13,10 +13,8 @@ import java.util.Map;
 @Data
 public class GeoFeature {
     private String id;
-    private String type;
-    private String name;
+    private String layerName;
     private String geometry;//几何数据
-    private String json;
     private Map<String,Object> properties=new HashMap<>();
 
 

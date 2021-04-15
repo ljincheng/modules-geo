@@ -22,7 +22,6 @@ public class DBHelper {
         params.put("dbtype", "mysql");
         params.put("host", "localhost");
         params.put("port", 3306);
-//        params.put("schema", "public");
         params.put("database", "geotools");
         params.put("user", "dev");
         params.put("passwd", "dev123");
@@ -31,7 +30,7 @@ public class DBHelper {
             mDataStore = (JDBCDataStore) DataStoreFinder.getDataStore(mDBParam);
         }catch (IOException e){
             e.printStackTrace();
-            throw new GeoException(e);
+            throw new GeoException(e.fillInStackTrace());
         }
     }
 
@@ -53,7 +52,7 @@ public class DBHelper {
             return dataSource.getConnection();
         }catch (SQLException e){
             e.printStackTrace();
-            throw new GeoException(e);
+            throw new GeoException(e.fillInStackTrace());
         }
     }
 

@@ -13,13 +13,6 @@ import java.util.List;
  */
 public interface GeoFeatureService {
 
-    /**
-     * 创建图层图形
-     * @param layerName 图层名称
-     * @param geometry 几何对象
-     * @return
-     */
-    GeoFeature createGeometry(String layerName, Geometry geometry);
 
     /**
      * 添加图层图形
@@ -27,7 +20,7 @@ public interface GeoFeatureService {
      * @param geometryEntity
      * @return
      */
-    boolean addFeature(String layerName, GeoFeature geometryEntity);
+    boolean addFeature(GeoFeature geometryEntity);
 
     /**
      * 更新图层图形
@@ -38,6 +31,8 @@ public interface GeoFeatureService {
     boolean updateFeature(GeoQuery query, GeoFeature geometryEntity);
 
     boolean deleteFeature(GeoQuery query);
+
+    GeoFeature findFeatureById(GeoQuery query);
 
     List<GeoFeature> queryFeature(GeoQuery query);
 

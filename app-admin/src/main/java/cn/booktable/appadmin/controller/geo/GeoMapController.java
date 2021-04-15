@@ -92,89 +92,56 @@ public class GeoMapController {
             freq.setQuery(geoQuery);
             AssertUtils.isNotBlank(freq.getType(),"操作类型为能不空");
             if(GeoRequestUtils.TYPE_ADD.equals(freq.getType())) {
-                AssertUtils.notNull(freq.getFeature(),"图形不能为空");
-                AssertUtils.isNotBlank(freq.getLayerName(),"图层不能为空");
-               boolean res= mGeoFeatureService.addFeature(freq.getLayerName(),freq.getFeature());
-               if(res) {
-                   result.setCode(JsonView.CODE_SUCCESS);
-                   result.setMsg("OK");
-               }else {
-                   result.setCode(JsonView.CODE_FAILE);
-                   result.setMsg("失败");
-               }
+//                AssertUtils.notNull(freq.getFeature(),"图形不能为空");
+//                AssertUtils.isNotBlank(freq.getLayerName(),"图层不能为空");
+//               boolean res= mGeoFeatureService.addFeature(freq.getLayerName(),freq.getFeature());
+//               if(res) {
+//                   result.setCode(JsonView.CODE_SUCCESS);
+//                   result.setMsg("OK");
+//               }else {
+//                   result.setCode(JsonView.CODE_FAILE);
+//                   result.setMsg("失败");
+//               }
             }else if(GeoRequestUtils.TYPE_UPDATE.equals(freq.getType())){
-                AssertUtils.notNull(freq.getFeature(),"图形不能为空");
-                AssertUtils.notNull(freq.getQuery(),"查询条件不能为空");
-                AssertUtils.isNotBlank(freq.getLayerName(),"图层不能为空");
-                freq.getQuery().setLayerName(freq.getLayerName());
-                boolean res= mGeoFeatureService.updateFeature(freq.getQuery(),freq.getFeature());
-                if(res) {
-                    result.setCode(JsonView.CODE_SUCCESS);
-                    result.setMsg("OK");
-                }else {
-                    result.setCode(JsonView.CODE_FAILE);
-                    result.setMsg("失败");
-                }
+//                AssertUtils.notNull(freq.getFeature(),"图形不能为空");
+//                AssertUtils.notNull(freq.getQuery(),"查询条件不能为空");
+//                AssertUtils.isNotBlank(freq.getLayerName(),"图层不能为空");
+//                freq.getQuery().setLayerName(freq.getLayerName());
+//                boolean res= mGeoFeatureService.updateFeature(freq.getQuery(),freq.getFeature());
+//                if(res) {
+//                    result.setCode(JsonView.CODE_SUCCESS);
+//                    result.setMsg("OK");
+//                }else {
+//                    result.setCode(JsonView.CODE_FAILE);
+//                    result.setMsg("失败");
+//                }
             }else if(GeoRequestUtils.TYPE_DELETE.equals(freq.getType())){
-                AssertUtils.notNull(freq.getQuery(),"查询条件不能为空");
-                AssertUtils.isNotBlank(freq.getLayerName(),"图层不能为空");
-                freq.getQuery().setLayerName(freq.getLayerName());
-                boolean res=mGeoFeatureService.deleteFeature(freq.getQuery());
-                if(res) {
-                    result.setCode(JsonView.CODE_SUCCESS);
-                    result.setMsg("OK");
-                }else {
-                    result.setCode(JsonView.CODE_FAILE);
-                    result.setMsg("失败");
-                }
+//                AssertUtils.notNull(freq.getQuery(),"查询条件不能为空");
+//                AssertUtils.isNotBlank(freq.getLayerName(),"图层不能为空");
+//                freq.getQuery().setLayerName(freq.getLayerName());
+//                boolean res=mGeoFeatureService.deleteFeature(freq.getQuery());
+//                if(res) {
+//                    result.setCode(JsonView.CODE_SUCCESS);
+//                    result.setMsg("OK");
+//                }else {
+//                    result.setCode(JsonView.CODE_FAILE);
+//                    result.setMsg("失败");
+//                }
             }else if(GeoRequestUtils.TYPE_QUERY.equals(freq.getType())){
-                AssertUtils.notNull(freq.getQuery(),"查询条件不能为空");
-                AssertUtils.isNotBlank(freq.getLayerName(),"图层不能为空");
-                freq.getQuery().setLayerName(freq.getLayerName());
-                freq.getQuery().setFilter(filter);
-//                mGeoFeatureService.writeFeature(freq.getQuery(),response.getOutputStream());
-                List<GeoFeature> res= mGeoFeatureService.queryFeature(freq.getQuery());
-                    result.setCode(JsonView.CODE_SUCCESS);
-                    result.setMsg("OK");
-                    result.setData(res);
+//                AssertUtils.notNull(freq.getQuery(),"查询条件不能为空");
+//                AssertUtils.isNotBlank(freq.getLayerName(),"图层不能为空");
+//                freq.getQuery().setLayerName(freq.getLayerName());
+//                freq.getQuery().setFilter(filter);
+////                mGeoFeatureService.writeFeature(freq.getQuery(),response.getOutputStream());
+//                List<GeoFeature> res= mGeoFeatureService.queryFeature(freq.getQuery());
+//                    result.setCode(JsonView.CODE_SUCCESS);
+//                    result.setMsg("OK");
+//                    result.setData(res);
             }
         }catch (Exception ex){
             ex.printStackTrace();
         }
         return result;
-    }
-
-    @RequestMapping("/query")
-    @ResponseBody
-    public String query(HttpServletRequest request, HttpServletResponse response, String layerName, String type, String geometry, Map<String,Object> properties,String filter){
-        try {
-            GeoFeatureRequest freq=new GeoFeatureRequest();
-            freq.setType(type);
-            freq.setLayerName(layerName);
-            GeoFeature feature=new GeoFeature();
-            feature.setGeometry(geometry);
-            if(properties!=null){
-                feature.setProperties(properties);
-            }
-            freq.setFeature(feature);
-            GeoQuery geoQuery=new GeoQuery();
-            freq.setQuery(geoQuery);
-            AssertUtils.isNotBlank(freq.getType(),"操作类型为能不空");
-
-            AssertUtils.notNull(freq.getQuery(),"查询条件不能为空");
-            AssertUtils.isNotBlank(freq.getLayerName(),"图层不能为空");
-            freq.getQuery().setLayerName(freq.getLayerName());
-            freq.getQuery().setFilter(filter);
-            OutputStream outputStream=response.getOutputStream();
-            mGeoFeatureService.writeFeature(freq.getQuery(),outputStream);
-            outputStream.flush();
-
-        }catch (Exception ex){
-            ex.printStackTrace();
-            return ex.getMessage();
-        }
-        return null;
-
     }
 
     /**

@@ -2,6 +2,7 @@ package cn.booktable.geo.service.impl;
 
 import cn.booktable.geo.core.*;
 import cn.booktable.geo.entity.GeoImageCacheEntity;
+import cn.booktable.geo.provider.GeoGeometryProvider;
 import cn.booktable.geo.provider.GeoMapProvider;
 import cn.booktable.geo.service.GeoCacheService;
 import cn.booktable.geo.service.GeoMapManageService;
@@ -83,6 +84,7 @@ public class GeoMapServiceImpl implements GeoMapService {
                BufferedImage image = renderer.paint(mapBounds, imageBounds, param.getFormat());
                ImageIO.write(image, param.getFormat(), output);
                imageCacheEntity.setImageData(imageToBase64(image,param.getFormat()));
+               imageCacheEntity.setGeom(GeoGeometryProvider.bboxParser(minx,miny,maxx,maxy));
                mMapProvider.cacheService().saveCache(imageCacheEntity);
            }else{
                byte[] bytes1 =Base64.getDecoder().decode(imageCache.getImageData());

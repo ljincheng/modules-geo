@@ -42,7 +42,7 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
         try{
             mapInfoEntity=findMapInfoEntity(conn,mapId);
         }catch (Exception ex){
-            throw new GeoException(ex);
+            throw new GeoException(ex.fillInStackTrace());
         }finally {
             DBHelper.close(conn);
         }

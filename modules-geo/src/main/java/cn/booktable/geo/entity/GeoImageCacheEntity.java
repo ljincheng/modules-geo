@@ -1,6 +1,7 @@
 package cn.booktable.geo.entity;
 
 import lombok.Data;
+import org.locationtech.jts.geom.Geometry;
 
 /**
  * @author ljc
@@ -12,5 +13,6 @@ public class GeoImageCacheEntity {
     private Integer z;//Z
     private Integer x;//X
     private Integer y;//Y
+    private Geometry geom;
     private String imageData;//图片
 }

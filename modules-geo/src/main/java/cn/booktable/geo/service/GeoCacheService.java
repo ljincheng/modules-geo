@@ -1,5 +1,6 @@
 package cn.booktable.geo.service;
 
+import cn.booktable.geo.core.GeoQuery;
 import cn.booktable.geo.entity.GeoImageCacheEntity;
 
 /**
@@ -13,6 +14,8 @@ public interface GeoCacheService {
      * @return
      */
     boolean saveCache(GeoImageCacheEntity imageCache);
+
+    boolean deleteCache(GeoQuery query);
 
     GeoImageCacheEntity findCache(String cacheId);
 }
