@@ -49,6 +49,19 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
         return mapInfoEntity;
     }
 
+    @Override
+    public List<GeoMapInfoEntity> projectMapInfoList(String projectId) {
+        Connection conn= DBHelper.getConnection();
+        List<GeoMapInfoEntity> list=null;
+        try{
+            list=projectMapInfoListByProjectId(conn,projectId);
+        }catch (Exception ex){
+            throw new GeoException(ex.fillInStackTrace());
+        }finally {
+            DBHelper.close(conn);
+        }
+        return list;
+    }
 
     @Override
     public GeoMapLayerEntity queryMapLayersByLayerId(String mapId, String layerId) {
@@ -69,7 +82,7 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
 
     private GeoMapInfoEntity findMapInfoEntity(Connection conn, String mapId){
         GeoMapInfoEntity mapInfoEntity=null;
-        String sql="SELECT map_id, title, bbox,zoom,min_zoom,max_zoom,center,map_url,map_config, create_time, update_time FROM geo_map_info WHERE  map_id=?";
+        String sql="SELECT map_id, title, bbox,zoom,min_zoom,max_zoom,center,map_url,map_config,project_id,sub_title,project_order FROM geo_map_info WHERE  map_id=?";
         PreparedStatement ps=null;
         try {
             ps = conn.prepareStatement(sql);
@@ -86,8 +99,9 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
                 mapInfoEntity.setCenter(res.getString(7));
                 mapInfoEntity.setMapUrl(res.getString(8));
                 mapInfoEntity.setMapConfig(res.getString(9));
-                mapInfoEntity.setCreateTime(res.getDate(10));
-                mapInfoEntity.setUpdateTime(res.getDate(11));
+                mapInfoEntity.setProjectId(res.getString(10));
+                mapInfoEntity.setSubTitle(res.getString(11));
+                mapInfoEntity.setProjectOrder(res.getInt(12));
             }
         }catch (Exception ex){
             throw new GeoException(ex);
@@ -95,6 +109,38 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
             DBHelper.close(ps);
         }
         return mapInfoEntity;
+    }
+
+    private List<GeoMapInfoEntity> projectMapInfoListByProjectId(Connection conn,  String projectId){
+        List<GeoMapInfoEntity> mapInfoList=new ArrayList<>();
+        String sql="SELECT map_id, title, bbox,zoom,min_zoom,max_zoom,center,map_url,map_config,project_id,sub_title,project_order FROM geo_map_info WHERE  project_id=? order by  project_order desc";
+        PreparedStatement ps=null;
+        try {
+            ps = conn.prepareStatement(sql);
+            ps.setString(1, projectId);
+            ResultSet res = ps.executeQuery();
+            while (res.next()) {
+                GeoMapInfoEntity mapInfoEntity=new GeoMapInfoEntity();
+                mapInfoEntity.setMapId(res.getString(1));
+                mapInfoEntity.setTitle(res.getString(2));
+                mapInfoEntity.setBbox(res.getString(3));
+                mapInfoEntity.setZoom(res.getInt(4));
+                mapInfoEntity.setMinZoom(res.getInt(5));
+                mapInfoEntity.setMaxZoom(res.getInt(6));
+                mapInfoEntity.setCenter(res.getString(7));
+                mapInfoEntity.setMapUrl(res.getString(8));
+                mapInfoEntity.setMapConfig(res.getString(9));
+                mapInfoEntity.setProjectId(res.getString(10));
+                mapInfoEntity.setSubTitle(res.getString(11));
+                mapInfoEntity.setProjectOrder(res.getInt(12));
+                mapInfoList.add(mapInfoEntity);
+            }
+        }catch (Exception ex){
+            throw new GeoException(ex.fillInStackTrace());
+        }finally {
+            DBHelper.close(ps);
+        }
+        return mapInfoList;
     }
 
     private List<GeoMapLayerEntity> mapLayerFullColumnListByMapId(Connection conn, String mapId,String layerId) {

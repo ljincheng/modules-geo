@@ -29,6 +29,9 @@ public class GeoMapInfoEntity {
     private String mapConfig;
     private Date createTime;
     private Date updateTime;
+    private String projectId;
+    private String subTitle;
+    private Integer projectOrder;
 
     private List<GeoMapLayerEntity> mapLayers;
 }

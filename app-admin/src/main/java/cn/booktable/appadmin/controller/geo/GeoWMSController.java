@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,10 +49,10 @@ public class GeoWMSController {
      * @return
      */
     @RequestMapping("/map/{id}")
-    public JsonView<GeoMapInfoEntity> mapInfo(@PathVariable("id") String id, HttpServletRequest request, HttpServletResponse response){
-        JsonView<GeoMapInfoEntity> view=new JsonView<>();
+    public JsonView<GeoProjectMapInfo> mapInfo(@PathVariable("id") String id, HttpServletRequest request, HttpServletResponse response){
+        JsonView<GeoProjectMapInfo> view=new JsonView<>();
         try {
-
+            List<GeoMapInfoEntity> projectMap=null;
             String token=request.getHeader("token");
             if(StringUtils.isBlank(token) || !token.equals("test001")){
                 view.setMsg("身份验证失败");
@@ -59,14 +60,21 @@ public class GeoWMSController {
                 return view;
             }
             response.setHeader("token",token);
+            GeoProjectMapInfo mapInfo=new GeoProjectMapInfo();
             GeoMapInfoEntity mapInfoEntity = geoMapManageService.findBaseMapInfo(id);
+            mapInfo.setMapInfo(mapInfoEntity);
             if(mapInfoEntity!=null){
-                view.setData(mapInfoEntity);
-                view.setCode(JsonView.CODE_SUCCESS);
-            }else{
-                view.setMsg("找不到数据");
-                view.setCode(JsonView.CODE_FAILE);
+                if(StringUtils.isNotBlank( mapInfoEntity.getProjectId())) {
+                  projectMap=  geoMapManageService.projectMapInfoList(mapInfoEntity.getProjectId());
+                  mapInfo.setProjectMap(projectMap);
+                }
             }
+            if(projectMap==null){
+                projectMap=new ArrayList<>();
+                mapInfo.setProjectMap(projectMap);
+            }
+            view.setData(mapInfo);
+            view.setCode(JsonView.CODE_SUCCESS);
         }catch (Exception ex){
             logger.error("获取地图异常",ex);
             view.setMsg("获取数据异常");
@@ -120,6 +128,7 @@ public class GeoWMSController {
     public JsonView<Boolean> addFeature(HttpServletRequest request, HttpServletResponse response,@PathVariable("mapId") String mapId, @RequestBody GeoFeature feature){
         JsonView<Boolean> result=new JsonView<>();
         try {
+            feature.setMapId(mapId);
             boolean res= mGeoFeatureService.addFeature(feature);
             if(res){
                 GeoQuery geoQuery=new GeoQuery();
