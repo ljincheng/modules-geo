@@ -95,22 +95,26 @@ public class GeoFeatureServiceImpl implements GeoFeatureService {
     }
 
     @Override
-    public boolean addFeature(GeoFeature geometryEntity) {
+    public boolean addFeature(GeoFeature getFeature) {
+
         try (Transaction transaction = new DefaultTransaction()) {
-            String uuid=geometryEntity.getId();
+            String uuid=getFeature.getId();
             if(StringUtils.isBlank(uuid)){
                 uuid=UUID.randomUUID().toString().replace("-","");
             }
-            SimpleFeatureStore featureSource= (SimpleFeatureStore)mDataStore.getFeatureSource(geometryEntity.getLayerName());
+            SimpleFeatureStore featureSource= (SimpleFeatureStore)mDataStore.getFeatureSource(getFeature.getLayerName());
             featureSource.setTransaction(transaction);
             if(featureSource==null){
                 throw new GeoException("图层不存在");
             }
-            Map<String, Object> atts = geometryEntity.getProperties();
+            Map<String, Object> atts = getFeature.getProperties();
+            if(atts==null){
+                atts=new HashMap<>();
+            }
             SimpleFeatureType schema = featureSource.getSchema();
 
             Object[] attributes = new Object[schema.getAttributeCount()];
-            atts.put(schema.getGeometryDescriptor().getLocalName(),GeoGeometryProvider.parserJsonFormat(geometryEntity.getGeometry()));
+            atts.put(schema.getGeometryDescriptor().getLocalName(),GeoGeometryProvider.parserJsonFormat(getFeature.getGeometry()));
             for (int i = 0; i < attributes.length; i++) {
                 AttributeDescriptor descriptor = schema.getDescriptor(i);
                 attributes[i] =atts.get(descriptor.getLocalName());

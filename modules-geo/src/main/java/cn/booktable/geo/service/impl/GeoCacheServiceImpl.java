@@ -38,38 +38,6 @@ public class GeoCacheServiceImpl implements GeoCacheService {
     {
         mDataStore= DBHelper.dataStore();
     }
-//    @Override
-//    public boolean saveCache(GeoImageCacheEntity imageCache) {
-//
-//        Connection conn= DBHelper.getConnection();
-//        PreparedStatement ps=null;
-//        try{
-//            if(imageCache.getZ()!=null && imageCache.getX()!=null && imageCache.getY()!=null) {
-//                String sql = "INSERT INTO geo_image_cache ( cache_id, image_id, z, x, y, image_data ) VALUES " +
-//                        "(?,?,?,?,?,?)";
-//                ps = conn.prepareStatement(sql);
-//                ps.setString(1, imageCache.getCacheId());
-//                ps.setString(2, imageCache.getImageId());
-//                ps.setInt(3, imageCache.getZ());
-//                ps.setInt(4, imageCache.getX());
-//                ps.setInt(5, imageCache.getY());
-//                ps.setString(6, imageCache.getImageData());
-//            }else{
-//                String sql = "INSERT INTO geo_image_cache ( cache_id, image_id, image_data ) VALUES " +
-//                        "(?,?,?)";
-//                ps = conn.prepareStatement(sql);
-//                ps.setString(1, imageCache.getCacheId());
-//                ps.setString(2, imageCache.getImageId());
-//                ps.setString(3, imageCache.getImageData());
-//            }
-//            return ps.execute();
-//        }catch (Exception ex){
-//            throw new GeoException(ex);
-//        }finally {
-//            DBHelper.close(ps);
-//            DBHelper.close(conn);
-//        }
-//    }
 
     @Override
     public boolean saveCache(GeoImageCacheEntity cacheEntity){
@@ -128,7 +96,7 @@ public class GeoCacheServiceImpl implements GeoCacheService {
         Connection conn= DBHelper.getConnection();
         PreparedStatement ps=null;
         try{
-            String sql="select cache_id, image_id, z, x, y, image_data  from geo_image_cache where cache_id=?";
+            String sql="select cache_id, image_id,image_data  from geo_image_cache where cache_id=?";
             ps = conn.prepareStatement(sql);
             ps.setString(1, cacheId);
             ResultSet res = ps.executeQuery();
@@ -136,10 +104,7 @@ public class GeoCacheServiceImpl implements GeoCacheService {
                 GeoImageCacheEntity imageCache=new GeoImageCacheEntity();
                 imageCache.setCacheId(res.getString(1));
                 imageCache.setImageId(res.getString(2));
-                imageCache.setZ(res.getInt(3));
-                imageCache.setX(res.getInt(4));
-                imageCache.setY(res.getInt(5));
-                imageCache.setImageData(res.getString(6));
+                imageCache.setImageData(res.getString(3));
                 return imageCache;
             }
 
