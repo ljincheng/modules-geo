@@ -16,7 +16,6 @@ public interface GeoFeatureService {
 
     /**
      * 添加图层图形
-     * @param layerName 图层名称
      * @param geometryEntity
      * @return
      */

@@ -4,12 +4,12 @@ import cn.booktable.geo.core.*;
 import cn.booktable.geo.entity.GeoImageCacheEntity;
 import cn.booktable.geo.provider.GeoGeometryProvider;
 import cn.booktable.geo.provider.GeoMapProvider;
+import cn.booktable.geo.provider.TileModelProvider;
 import cn.booktable.geo.service.GeoCacheService;
-import cn.booktable.geo.service.GeoMapManageService;
 import cn.booktable.geo.service.GeoMapService;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -28,6 +28,7 @@ import java.util.Map;
 public class GeoMapServiceImpl implements GeoMapService {
 
 //    private  GeoMapContent map=null;
+    private GeoCacheService geoCacheService=new GeoCacheServiceImpl();
     private GeoMapProvider mMapProvider=null;
     public static Map<String,GeoMapContent> mMapContentMap=new HashMap<>();
     private boolean openCache=true;
@@ -38,10 +39,15 @@ public class GeoMapServiceImpl implements GeoMapService {
     }
 
     @Override
-    public void clearCache() {
+    public void reload(Boolean clearCacheImage) {
+        GeoQuery query=new GeoQuery();
         for(String mapId: mMapContentMap.keySet()){
             GeoMapContent map=mMapContentMap.get(mapId);
             map.cleanCache();
+            if(clearCacheImage!=null && clearCacheImage){
+                query.setFilter("map_id='"+mapId+"'");
+                geoCacheService.deleteCache(query);
+            }
         }
     }
 
@@ -58,20 +64,21 @@ public class GeoMapServiceImpl implements GeoMapService {
     public void paint(PaintParam param, OutputStream output) {
        try {
            //坐标范围
-           String[] split = param.getBbox().split(",");
+           String bbox= TileModelProvider.instance().bbox(param.getZ(),param.getX(),param.getY());
+           param.setBbox(bbox);
+           String[] split = bbox.split(",");
            double minx = Double.valueOf(split[0]);
            double miny = Double.valueOf(split[1]);
            double maxx = Double.valueOf(split[2]);
            double maxy = Double.valueOf(split[3]);
-
            //图片大小
-           String[] wh = param.getArea().split(",");
-           int w = Integer.valueOf(wh[0]);
-           int h = Integer.valueOf(wh[1]);
+           int[] tileSize=TileModelProvider.instance().getTileSize();
+           int w = tileSize[0];
+           int h = tileSize[1];
 
            GeoImageCacheEntity imageCacheEntity=new GeoImageCacheEntity();
-           imageCacheEntity.setImageId(param.getMapId());
-           imageCacheEntity.setCacheId(param.getMapId()+"-"+param.getArea()+"-"+param.getBbox()+"-"+param.getFormat());
+           imageCacheEntity.setMapId(param.getMapId());
+           imageCacheEntity.setCacheId(param.getMapId()+"-"+param.getZ()+"-"+param.getX()+"-"+param.getY()+"."+param.getFormat());
            GeoImageCacheEntity imageCache=mMapProvider.cacheService().findCache(imageCacheEntity.getCacheId());
            if(imageCache==null || imageCache.getImageData().length()==0) {
                ReferencedEnvelope mapBounds = new ReferencedEnvelope(minx, maxx, miny, maxy, DefaultGeographicCRS.WGS84);

@@ -25,8 +25,13 @@ public class GeoMapLayerEntity {
     private Integer layerOrder;//图层排序
     private Integer display;//是否显示
     private String styleId;//样式ID
+    private String layerSource;
+    private String layerType;
+    private String layerFilter;
+    private String envelope;
+    private String title;
 
-    private GeoLayerInfoEntity layerInfoEntity;
+//    private GeoLayerInfoEntity layerInfoEntity;
     private GeoStyleInfoEntity styleInfoEntity;
 
 }

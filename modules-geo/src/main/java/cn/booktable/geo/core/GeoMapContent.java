@@ -1,6 +1,5 @@
 package cn.booktable.geo.core;
 
-import cn.booktable.geo.entity.GeoLayerInfoEntity;
 import cn.booktable.geo.entity.GeoMapLayerEntity;
 import cn.booktable.geo.entity.GeoStyleInfoEntity;
 import cn.booktable.geo.provider.GeoMapProvider;
@@ -125,25 +124,25 @@ public final class GeoMapContent  extends MapContent {
     private Layer toLayer(GeoMapLayerEntity mapLayer) {
         Layer layer = null;
         try {
-            GeoLayerInfoEntity layerInfo = mapLayer.getLayerInfoEntity();
+//            GeoLayerInfoEntity layerInfo = mapLayer.getLayerInfoEntity();
             GeoStyleInfoEntity styleInfo = mapLayer.getStyleInfoEntity();
-            if (layerInfo != null) {
-                StyleType layerType = StyleGenerator.getStyleType(layerInfo.getLayerType());
+            if (mapLayer != null) {
+                StyleType layerType = StyleGenerator.getStyleType(mapLayer.getLayerType());
                 Style style = null;
                 if (layerType != null && layerType.compareTo(StyleType.RASTER) == 0) {
                     style = styleInfo == null || StringUtils.isBlank(styleInfo.getStyleType()) ? StyleGenerator.instance().rasterStyle() : getStyle(styleInfo);
-                    final GridCoverage2D coverage = readCoverage(layerInfo);
+                    final GridCoverage2D coverage = readCoverage(mapLayer);
                     GridCoverageLayer gridLayer = new GridCoverageLayer(coverage, style);
                     layer = gridLayer;
                 } else if (styleInfo != null) {
-                    FeatureSource fs = mMapProvider.getDataStore().getFeatureSource(layerInfo.getLayerName());
+                    FeatureSource fs = mMapProvider.getDataStore().getFeatureSource(mapLayer.getLayerSource());
                     style = getStyle(styleInfo);
                     if (fs != null && style != null) {
                         FeatureLayer featureLayer = new FeatureLayer(fs, style);
-                        if (StringUtils.isNotBlank(layerInfo.getLayerFilter())) {
+                        if (StringUtils.isNotBlank(mapLayer.getLayerFilter())) {
                             Query query = new Query();
                             try {
-                                query.setFilter(CQL.toFilter(layerInfo.getLayerFilter()));
+                                query.setFilter(CQL.toFilter(mapLayer.getLayerFilter()));
                             } catch (Exception ex) {
                                 throw new GeoException(ex);
                             }
@@ -206,23 +205,27 @@ public final class GeoMapContent  extends MapContent {
         return style;
     }
 
-    private GridCoverage2D readCoverage(GeoLayerInfoEntity layerInfo) {
+    private GridCoverage2D readCoverage(GeoMapLayerEntity mapLayer) {
         try {
 //            String[] split = layerInfo.getEnvelope().split(",");
 //            double minx = Double.valueOf(split[0]);
 //            double miny = Double.valueOf(split[1]);
 //            double with = Double.valueOf(split[2]);
 //            double height = Double.valueOf(split[3]);
-            BufferedImage bi = ImageIO.read(new File(layerInfo.getLayerName()));
+            BufferedImage bi = ImageIO.read(new File(mapLayer.getLayerSource()));
             GridCoverageFactory factory = new GridCoverageFactory();
             CoordinateReferenceSystem crs = DefaultGeographicCRS.WGS84;
             double minx=-180,miny=-90,width=360,height=180;
-            if(StringUtils.isBlank(layerInfo.getEnvelope())) {
+            if(StringUtils.isBlank(mapLayer.getEnvelope())) {
                 int gw=bi.getWidth()+1,gh=bi.getHeight()+1;
                   height =Math.floor( width * gh/(gw * 2));
-                  miny= height/2 - 90;
+                  miny= - height/2;
+                  if(height>180){
+                      width=Math.floor(2*height*gw/(gh));
+                      minx=- width/2;
+                  }
             }else{
-                String[] split = layerInfo.getEnvelope().split(",");
+                String[] split = mapLayer.getEnvelope().split(",");
                   minx = Double.valueOf(split[0]);
                   miny = Double.valueOf(split[1]);
                   width =Math.round( Double.valueOf(split[2]));
@@ -231,7 +234,7 @@ public final class GeoMapContent  extends MapContent {
             Envelope envelope = new ReferencedEnvelope(
                     minx, minx+width, miny, miny+height, crs);
 //            Envelope2D envelope = new Envelope2D(crs, minx, miny, width, height);
-            return factory.create(layerInfo.getLayerId(),bi,envelope);
+            return factory.create(mapLayer.getId(),bi,envelope);
         } catch (Exception ex) {
             throw new GeoException(ex);
         }

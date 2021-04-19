@@ -19,10 +19,12 @@ import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
 import org.opengis.feature.type.GeometryDescriptor;
+import org.opengis.filter.Filter;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +51,7 @@ public class GeoCacheServiceImpl implements GeoCacheService {
             }
             Map<String, Object> atts = new HashMap<>();
             atts.put("cache_id",cacheEntity.getCacheId());
-            atts.put("image_id",cacheEntity.getImageId());
+            atts.put("map_id",cacheEntity.getMapId());
             atts.put("image_data",cacheEntity.getImageData());
             atts.put("geom",cacheEntity.getGeom());
             SimpleFeatureType schema = featureSource.getSchema();
@@ -78,8 +80,8 @@ public class GeoCacheServiceImpl implements GeoCacheService {
             if(featureSource==null){
                 throw new GeoException("图层不存在");
             }
-//            query.setLayerName(TYPENAME_IMAGECACHE);
-            Query readQuery=new Query();// QueryGenerator.toQuery(query);
+            Query readQuery=new Query();
+
             readQuery.setFilter(QueryGenerator.toFilter(query.getFilter()));
             SimpleFeatureType schema = featureSource.getSchema();
             featureSource.removeFeatures(readQuery.getFilter());
@@ -92,18 +94,36 @@ public class GeoCacheServiceImpl implements GeoCacheService {
     }
 
     @Override
+    public boolean clearAll() {
+        boolean result=false;
+        Connection conn= DBHelper.getConnection();
+        Statement ps=null;
+        try{
+            String sql="delete from "+TYPENAME_IMAGECACHE+" where 1=1 ";
+            ps = conn.createStatement();
+            result= ps.execute(sql);
+        }catch (Exception ex){
+            throw new GeoException(ex);
+        }finally {
+            DBHelper.close(ps);
+            DBHelper.close(conn);
+        }
+        return result;
+    }
+
+    @Override
     public GeoImageCacheEntity findCache(String cacheId) {
         Connection conn= DBHelper.getConnection();
         PreparedStatement ps=null;
         try{
-            String sql="select cache_id, image_id,image_data  from geo_image_cache where cache_id=?";
+            String sql="select cache_id, map_id,image_data  from "+TYPENAME_IMAGECACHE+" where cache_id=?";
             ps = conn.prepareStatement(sql);
             ps.setString(1, cacheId);
             ResultSet res = ps.executeQuery();
             if(res.next()){
                 GeoImageCacheEntity imageCache=new GeoImageCacheEntity();
                 imageCache.setCacheId(res.getString(1));
-                imageCache.setImageId(res.getString(2));
+                imageCache.setMapId(res.getString(2));
                 imageCache.setImageData(res.getString(3));
                 return imageCache;
             }

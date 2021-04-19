@@ -2,7 +2,6 @@ package cn.booktable.appadmin.controller.geo;
 
 import cn.booktable.core.view.JsonView;
 import cn.booktable.geo.core.GeoFeature;
-import cn.booktable.geo.core.GeoFeatureRequest;
 import cn.booktable.geo.core.GeoQuery;
 import cn.booktable.geo.entity.GeoMapInfoEntity;
 import cn.booktable.geo.provider.GeoGeometryProvider;
@@ -25,9 +24,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author ljc
@@ -37,6 +34,7 @@ import java.util.Map;
 public class GeoWMSController {
 
     private static Logger logger= LoggerFactory.getLogger(GeoWMSController.class);
+    private static final String TB_PARKING_POLYGON="geo_parking_polygon";
 
     GeoMapService mapService = new GeoMapServiceImpl();
     GeoMapManageService geoMapManageService = new GeoMapManageServiceImpl();
@@ -49,8 +47,8 @@ public class GeoWMSController {
      * @return
      */
     @RequestMapping("/map/{id}")
-    public JsonView<GeoProjectMapInfo> mapInfo(@PathVariable("id") String id, HttpServletRequest request, HttpServletResponse response){
-        JsonView<GeoProjectMapInfo> view=new JsonView<>();
+    public JsonView<GeoProjectMapInfoBo> mapInfo(@PathVariable("id") String id, HttpServletRequest request, HttpServletResponse response){
+        JsonView<GeoProjectMapInfoBo> view=new JsonView<>();
         try {
             List<GeoMapInfoEntity> projectMap=null;
             String token=request.getHeader("token");
@@ -60,7 +58,7 @@ public class GeoWMSController {
                 return view;
             }
             response.setHeader("token",token);
-            GeoProjectMapInfo mapInfo=new GeoProjectMapInfo();
+            GeoProjectMapInfoBo mapInfo=new GeoProjectMapInfoBo();
             GeoMapInfoEntity mapInfoEntity = geoMapManageService.findBaseMapInfo(id);
             mapInfo.setMapInfo(mapInfoEntity);
             if(mapInfoEntity!=null){
@@ -92,18 +90,18 @@ public class GeoWMSController {
      * @param p 坐标点
      * @return
      */
-    @RequestMapping("/coordQuery/{mapId}")
+    @RequestMapping("/queryParking/{mapId}")
     @ResponseBody
-    public String coordQuery(HttpServletRequest request, HttpServletResponse response,@PathVariable("mapId") String mapId, String layerId, String p){
+    public String coordQuery(HttpServletRequest request, HttpServletResponse response,@PathVariable("mapId") String mapId,  String p){
         try {
             AssertUtils.isNotBlank(p,"坐标不能为空");
-            AssertUtils.isNotBlank(layerId,"图层不能为空");
+//            AssertUtils.isNotBlank(layerSource,"图层不能为空");
             AssertUtils.isTrue(p.indexOf(",")>0,"坐标格式不正确");
             String[] split = p.split(",");
             int pointNum=split.length;
             AssertUtils.isTrue(pointNum%2 == 0,"坐标格式不正确");
             GeoQuery geoQuery=new GeoQuery();
-            geoQuery.setLayerId(layerId);
+            geoQuery.setLayerSource(TB_PARKING_POLYGON);
             geoQuery.setMapId(mapId);
             if(split.length==2) {
                 geoQuery.setFilter("CONTAINS(geom,POINT(" + p.replace(",", " ") + "))");
@@ -123,12 +121,13 @@ public class GeoWMSController {
         return null;
     }
 
-    @RequestMapping("/addFeature/{mapId}")
-//    @ResponseBody
+    @RequestMapping("/addParking/{mapId}")
     public JsonView<Boolean> addFeature(HttpServletRequest request, HttpServletResponse response,@PathVariable("mapId") String mapId, @RequestBody GeoFeature feature){
         JsonView<Boolean> result=new JsonView<>();
         try {
             feature.setMapId(mapId);
+            feature.setLayerSource(TB_PARKING_POLYGON);
+            feature.getProperties().put("map_id",mapId);
             boolean res= mGeoFeatureService.addFeature(feature);
             if(res){
                 GeoQuery geoQuery=new GeoQuery();
@@ -149,15 +148,15 @@ public class GeoWMSController {
 
     }
 
-    @RequestMapping("/deleteFeature/{mapId}")
+    @RequestMapping("/deleteParking/{mapId}")
     public JsonView<Integer> deleteFeature(HttpServletRequest request, HttpServletResponse response,@PathVariable("mapId") String mapId, @RequestBody GeoQueryBo queryBo){
         JsonView<Integer> result=new JsonView<>();
         try {
             AssertUtils.isNotBlank(queryBo.getFeatureId(),"条件不能为空");
-            AssertUtils.isNotBlank(queryBo.getLayerId(),"图层不能为空");
+//            AssertUtils.isNotBlank(queryBo.getLayerSource(),"图层不能为空");
             GeoQuery query=new GeoQuery();
             query.setMapId(mapId);
-            query.setLayerId(queryBo.getLayerId());
+            query.setLayerSource(TB_PARKING_POLYGON);
             query.setFilter(queryBo.getFilter());
             query.setFeatureId(queryBo.getFeatureId());
            List<GeoFeature> featureList= mGeoFeatureService.queryFeature(query);
@@ -180,6 +179,22 @@ public class GeoWMSController {
             result.setMsg(ex.getMessage());
         }
         return result;
+
+    }
+
+    @RequestMapping("/addForm/{mapId}")
+    @ResponseBody
+    public String addForm(HttpServletRequest request, HttpServletResponse response,@PathVariable("mapId") String mapId){
+         StringBuilder html=new StringBuilder();
+        try {
+            html.append("<input type=\"hidden\" name=\"map_id\" value='").append(mapId).append("' />")
+                    .append("<input type=\"text\" name=\"parking_no\" placeholder=\"车位编号\">")
+                    .append("<input type=\"text\" name=\"building_id\" placeholder=\"楼栋ID\">")
+            .append("<select  name=\"sale_status\"><option value=''>请选择</option><option value='1'>已售</option><option value='2'>未售</option></select>");
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }
+        return html.toString();
 
     }
 }

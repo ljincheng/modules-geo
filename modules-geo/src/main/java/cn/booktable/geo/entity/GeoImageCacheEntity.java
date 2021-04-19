@@ -9,7 +9,7 @@ import org.locationtech.jts.geom.Geometry;
 @Data
 public class GeoImageCacheEntity {
     private String cacheId;//车位UUID
-    private String imageId;//地图ID
+    private String mapId;//地图ID
     private Geometry geom;
     private String imageData;//图片
 }

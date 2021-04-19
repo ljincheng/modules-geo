@@ -7,7 +7,6 @@ import cn.booktable.geo.core.GeoFeature;
 import cn.booktable.geo.core.QueryGenerator;
 import cn.booktable.geo.entity.GeoMapLayerEntity;
 import cn.booktable.geo.provider.GeoGeometryProvider;
-import cn.booktable.geo.service.GeoCacheService;
 import cn.booktable.geo.service.GeoFeatureService;
 import cn.booktable.geo.service.GeoMapManageService;
 import org.apache.commons.lang3.StringUtils;
@@ -15,29 +14,20 @@ import org.geotools.data.*;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.simple.SimpleFeatureStore;
-import org.geotools.data.store.ContentDataStore;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.FeatureIterator;
-import org.geotools.feature.NameImpl;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
-import org.geotools.filter.identity.FeatureIdImpl;
 import org.geotools.filter.text.cql2.CQL;
 import org.geotools.filter.text.cql2.CQLException;
 import org.geotools.geojson.feature.FeatureJSON;
-import org.geotools.jdbc.JDBCFeatureReader;
 import org.geotools.util.factory.Hints;
 import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.Point;
-import org.opengis.feature.Feature;
 import org.opengis.feature.Property;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
 import org.opengis.filter.Filter;
 import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.expression.PropertyName;
 import org.opengis.filter.identity.FeatureId;
 
 import java.util.*;
@@ -102,7 +92,7 @@ public class GeoFeatureServiceImpl implements GeoFeatureService {
             if(StringUtils.isBlank(uuid)){
                 uuid=UUID.randomUUID().toString().replace("-","");
             }
-            SimpleFeatureStore featureSource= (SimpleFeatureStore)mDataStore.getFeatureSource(getFeature.getLayerName());
+            SimpleFeatureStore featureSource= (SimpleFeatureStore)mDataStore.getFeatureSource(getFeature.getLayerSource());
             featureSource.setTransaction(transaction);
             if(featureSource==null){
                 throw new GeoException("图层不存在");
@@ -168,17 +158,17 @@ public class GeoFeatureServiceImpl implements GeoFeatureService {
     public boolean deleteFeature(GeoQuery query) {
         assert(query!=null &&  QueryGenerator.hasFilter(query));
 
-        GeoMapLayerEntity mapLayerEntity= geoMapManageService.queryMapLayersByLayerId(query.getMapId(),query.getLayerId());
-        if(mapLayerEntity==null || mapLayerEntity.getLayerInfoEntity()==null && QueryGenerator.hasFilter(query)){
+        GeoMapLayerEntity mapLayerEntity= geoMapManageService.queryMapLayersByLayerId(query.getMapId(),query.getLayerSource());
+        if(mapLayerEntity==null ){
             return false;
         }
 
         try (Transaction transaction = new DefaultTransaction()) {
-            SimpleFeatureSource featureSource= mDataStore.getFeatureSource(mapLayerEntity.getLayerInfoEntity().getLayerName());
+            SimpleFeatureSource featureSource= mDataStore.getFeatureSource(mapLayerEntity.getLayerSource());
             if(featureSource==null){
                 return false;
             }
-            String layerFilter= mapLayerEntity.getLayerInfoEntity().getLayerFilter();
+            String layerFilter= mapLayerEntity.getLayerFilter();
             Query readQuery= toFeatureQuery(query,layerFilter);
              try {
                  SimpleFeatureStore store = (SimpleFeatureStore) featureSource;
@@ -201,19 +191,19 @@ public class GeoFeatureServiceImpl implements GeoFeatureService {
     @Override
     public GeoFeature findFeatureById(GeoQuery query) {
         assert(query!=null );
-        assert (StringUtils.isNotBlank(query.getLayerId()));
-        assert (StringUtils.isNotBlank(query.getFilter()));
+        assert (StringUtils.isNotBlank(query.getLayerSource()));
+        assert (StringUtils.isNotBlank(query.getFeatureId()));
         GeoFeature geoFeature=null;
         try {
-            GeoMapLayerEntity mapLayerEntity= geoMapManageService.queryMapLayersByLayerId(query.getMapId(),query.getLayerId());
-            if(mapLayerEntity==null || mapLayerEntity.getLayerInfoEntity()==null && QueryGenerator.hasFilter(query)){
+            GeoMapLayerEntity mapLayerEntity= geoMapManageService.queryMapLayersByLayerId(query.getMapId(),query.getLayerSource());
+            if(mapLayerEntity==null ){
                 return null;
             }
-            SimpleFeatureSource featureSource= mDataStore.getFeatureSource(mapLayerEntity.getLayerInfoEntity().getLayerName());
+            SimpleFeatureSource featureSource= mDataStore.getFeatureSource(mapLayerEntity.getLayerSource());
             if(featureSource==null){
                 return null;
             }
-            String layerFilter= mapLayerEntity.getLayerInfoEntity().getLayerFilter();
+            String layerFilter= mapLayerEntity.getLayerFilter();
             Query readQuery= toFeatureQuery(query,layerFilter);
             DefaultFeatureResults results = new DefaultFeatureResults(featureSource, readQuery);
             if(results.getCount()>0){
@@ -247,20 +237,20 @@ public class GeoFeatureServiceImpl implements GeoFeatureService {
     @Override
     public List<GeoFeature> queryFeature(GeoQuery query) {
         assert(query!=null );
-        assert (StringUtils.isNotBlank(query.getLayerId()));
+        assert (StringUtils.isNotBlank(query.getLayerSource()));
         assert (StringUtils.isNotBlank(query.getFilter()));
         List<GeoFeature> result=new ArrayList<>();
         try {
-            GeoMapLayerEntity mapLayerEntity= geoMapManageService.queryMapLayersByLayerId(query.getMapId(),query.getLayerId());
-            if(mapLayerEntity==null || mapLayerEntity.getLayerInfoEntity()==null && QueryGenerator.hasFilter(query)){
+            GeoMapLayerEntity mapLayerEntity= geoMapManageService.queryMapLayersByLayerId(query.getMapId(),query.getLayerSource());
+            if(mapLayerEntity==null ){
                 return null;
             }
-            SimpleFeatureSource featureSource= mDataStore.getFeatureSource(mapLayerEntity.getLayerInfoEntity().getLayerName());
+            SimpleFeatureSource featureSource= mDataStore.getFeatureSource(mapLayerEntity.getLayerSource());
             if(featureSource==null){
                 return null;
             }
 
-            String layerFilter= mapLayerEntity.getLayerInfoEntity().getLayerFilter();
+            String layerFilter= mapLayerEntity.getLayerFilter();
             Query readQuery= toFeatureQuery(query,layerFilter);
             DefaultFeatureResults results = new DefaultFeatureResults(featureSource, readQuery);
             if(results.getCount()>0){
@@ -296,20 +286,20 @@ public class GeoFeatureServiceImpl implements GeoFeatureService {
     public void writeFeature(GeoQuery query, Object output){
         assert(query!=null);
         assert(StringUtils.isNotBlank(query.getMapId()));
-        assert(StringUtils.isNotBlank(query.getLayerId()));
+        assert(StringUtils.isNotBlank(query.getLayerSource()));
         assert(StringUtils.isNotBlank(query.getFilter()));
 //        List<SimpleFeature> result=new ArrayList<>();
         try {
-            GeoMapLayerEntity mapLayerEntity= geoMapManageService.queryMapLayersByLayerId(query.getMapId(),query.getLayerId());
-            if(mapLayerEntity==null || mapLayerEntity.getLayerInfoEntity()==null && QueryGenerator.hasFilter(query)){
+            GeoMapLayerEntity mapLayerEntity= geoMapManageService.queryMapLayersByLayerId(query.getMapId(),query.getLayerSource());
+            if(mapLayerEntity==null ){
                 return ;
             }
-            SimpleFeatureSource featureSource= mDataStore.getFeatureSource(mapLayerEntity.getLayerInfoEntity().getLayerName());
+            SimpleFeatureSource featureSource= mDataStore.getFeatureSource(mapLayerEntity.getLayerSource());
             if(featureSource==null){
                 return;
             }
             String filter=query.getFilter();
-            String layerFilter= mapLayerEntity.getLayerInfoEntity().getLayerFilter();
+            String layerFilter= mapLayerEntity.getLayerFilter();
             if(layerFilter!=null && layerFilter.trim().length()>0){
                 filter +=" and "+layerFilter;
             }

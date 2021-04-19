@@ -13,9 +13,9 @@ public interface GeoMapService {
 
 
     /**
-     * 清理缓存
+     * 重载缓存
      */
-    void clearCache();
+    void reload(Boolean clearCacheImage);
 
     /**
      * 地图输出

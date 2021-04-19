@@ -7,7 +7,7 @@ import lombok.Data;
  */
 @Data
 public class GeoQueryBo {
-    private String layerId;
+    private String layerSource;
     private String filter;
     private String featureId;
 }

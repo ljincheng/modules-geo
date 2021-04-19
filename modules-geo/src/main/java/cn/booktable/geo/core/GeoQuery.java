@@ -10,8 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 public class GeoQuery {
 
     private String mapId;
-    private String layerId;
-//    private String layerName;
+    private String layerSource;
     private String filter;
     private String featureId;
 

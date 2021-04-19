@@ -9,7 +9,7 @@ import java.util.List;
  * @author ljc
  */
 @Data
-public class GeoProjectMapInfo {
+public class GeoProjectMapInfoBo {
     private GeoMapInfoEntity mapInfo;
     private List<GeoMapInfoEntity> projectMap;
 
