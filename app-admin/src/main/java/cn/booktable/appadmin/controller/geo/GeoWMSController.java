@@ -1,6 +1,8 @@
 package cn.booktable.appadmin.controller.geo;
 
 import cn.booktable.core.view.JsonView;
+import cn.booktable.geo.core.GeoEngine;
+import cn.booktable.geo.core.GeoEngineImpl;
 import cn.booktable.geo.core.GeoFeature;
 import cn.booktable.geo.core.GeoQuery;
 import cn.booktable.geo.entity.GeoMapInfoEntity;
@@ -17,11 +19,13 @@ import cn.booktable.util.AssertUtils;
 import cn.booktable.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,10 +40,21 @@ public class GeoWMSController {
     private static Logger logger= LoggerFactory.getLogger(GeoWMSController.class);
     private static final String TB_PARKING_POLYGON="geo_parking_polygon";
 
-    GeoMapService mapService = new GeoMapServiceImpl();
-    GeoMapManageService geoMapManageService = new GeoMapManageServiceImpl();
-    GeoFeatureService mGeoFeatureService=new GeoFeatureServiceImpl();
-    GeoCacheService geoCacheService=new GeoCacheServiceImpl();
+//    GeoMapService mapService = new GeoMapServiceImpl();
+//    GeoMapManageService geoMapManageService = new GeoMapManageServiceImpl();
+//    GeoFeatureService mGeoFeatureService=new GeoFeatureServiceImpl();
+//    GeoCacheService geoCacheService=new GeoCacheServiceImpl();
+
+    GeoEngine mGeoEngine=null;
+    @Autowired
+    DataSource dataSource;
+
+    private GeoEngine getGeoEngine(){
+        if(this.mGeoEngine==null){
+            this.mGeoEngine=new GeoEngineImpl(dataSource);
+        }
+        return this.mGeoEngine;
+    }
 
     /**
      * 获取地图
@@ -59,11 +74,11 @@ public class GeoWMSController {
             }
             response.setHeader("token",token);
             GeoProjectMapInfoBo mapInfo=new GeoProjectMapInfoBo();
-            GeoMapInfoEntity mapInfoEntity = geoMapManageService.findBaseMapInfo(id);
+            GeoMapInfoEntity mapInfoEntity =getGeoEngine().getGeoMapManageService().findBaseMapInfo(id);
             mapInfo.setMapInfo(mapInfoEntity);
             if(mapInfoEntity!=null){
                 if(StringUtils.isNotBlank( mapInfoEntity.getProjectId())) {
-                  projectMap=  geoMapManageService.projectMapInfoList(mapInfoEntity.getProjectId());
+                  projectMap= getGeoEngine().getGeoMapManageService().projectMapInfoList(mapInfoEntity.getProjectId());
                   mapInfo.setProjectMap(projectMap);
                 }
             }
@@ -111,7 +126,7 @@ public class GeoWMSController {
                 return null;
             }
             OutputStream outputStream=response.getOutputStream();
-            mGeoFeatureService.writeFeature(geoQuery,outputStream);
+            getGeoEngine().getGeoFeatureService().writeFeature(geoQuery,outputStream);
             outputStream.flush();
 
         }catch (Exception ex){
@@ -128,11 +143,11 @@ public class GeoWMSController {
             feature.setMapId(mapId);
             feature.setLayerSource(TB_PARKING_POLYGON);
             feature.getProperties().put("map_id",mapId);
-            boolean res= mGeoFeatureService.addFeature(feature);
+            boolean res= getGeoEngine().getGeoFeatureService().addFeature(feature);
             if(res){
                 GeoQuery geoQuery=new GeoQuery();
                 geoQuery.setFilter("BBOX(geom,"+GeoGeometryProvider.getBBoxString(feature.getGeometry())+")");
-                geoCacheService.deleteCache(geoQuery);
+                getGeoEngine().getGeoCacheService().deleteCache(geoQuery);
                 result.setCode(JsonView.CODE_SUCCESS);
                 result.setData(res);
                 return result;
@@ -159,9 +174,11 @@ public class GeoWMSController {
             query.setLayerSource(TB_PARKING_POLYGON);
             query.setFilter(queryBo.getFilter());
             query.setFeatureId(queryBo.getFeatureId());
-           List<GeoFeature> featureList= mGeoFeatureService.queryFeature(query);
+            GeoFeatureService geoFeatureService=getGeoEngine().getGeoFeatureService();
+            GeoCacheService geoCacheService=getGeoEngine().getGeoCacheService();
+           List<GeoFeature> featureList=geoFeatureService.queryFeature(query);
             if(featureList!=null && featureList.size()>0){
-                mGeoFeatureService.deleteFeature(query);
+                geoFeatureService.deleteFeature(query);
                 for(GeoFeature feature:featureList) {
                     GeoQuery geoQuery = new GeoQuery();
                     geoQuery.setFilter("BBOX(geom," + GeoGeometryProvider.getBBoxString(feature.getGeometry()) + ")");

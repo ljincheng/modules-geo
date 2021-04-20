@@ -1,6 +1,6 @@
 package cn.booktable.geo.service.impl;
 
-import cn.booktable.geo.core.DBHelper;
+//import cn.booktable.geo.core.DBHelper;
 import cn.booktable.geo.core.GeoException;
 import cn.booktable.geo.core.GeoQuery;
 import cn.booktable.geo.core.QueryGenerator;
@@ -12,6 +12,7 @@ import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
+import org.geotools.jdbc.JDBCDataStore;
 import org.geotools.util.factory.Hints;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Polygon;
@@ -36,9 +37,10 @@ import java.util.UUID;
 public class GeoCacheServiceImpl implements GeoCacheService {
     private static final String TYPENAME_IMAGECACHE="geo_image_cache";
 
-    private DataStore mDataStore;
-    {
-        mDataStore= DBHelper.dataStore();
+    private JDBCDataStore mDataStore;
+
+    public GeoCacheServiceImpl(JDBCDataStore dataStore){
+        mDataStore=dataStore;
     }
 
     @Override
@@ -96,43 +98,33 @@ public class GeoCacheServiceImpl implements GeoCacheService {
     @Override
     public boolean clearAll() {
         boolean result=false;
-        Connection conn= DBHelper.getConnection();
-        Statement ps=null;
-        try{
+        try(Transaction tran=new DefaultTransaction(); Connection conn=mDataStore.getConnection(tran);Statement ps=conn.createStatement()){
             String sql="delete from "+TYPENAME_IMAGECACHE+" where 1=1 ";
-            ps = conn.createStatement();
             result= ps.execute(sql);
         }catch (Exception ex){
             throw new GeoException(ex);
-        }finally {
-            DBHelper.close(ps);
-            DBHelper.close(conn);
         }
         return result;
     }
 
     @Override
     public GeoImageCacheEntity findCache(String cacheId) {
-        Connection conn= DBHelper.getConnection();
-        PreparedStatement ps=null;
-        try{
+        try(Transaction tran=new DefaultTransaction(); Connection conn=mDataStore.getConnection(tran)){
             String sql="select cache_id, map_id,image_data  from "+TYPENAME_IMAGECACHE+" where cache_id=?";
-            ps = conn.prepareStatement(sql);
-            ps.setString(1, cacheId);
-            ResultSet res = ps.executeQuery();
-            if(res.next()){
-                GeoImageCacheEntity imageCache=new GeoImageCacheEntity();
-                imageCache.setCacheId(res.getString(1));
-                imageCache.setMapId(res.getString(2));
-                imageCache.setImageData(res.getString(3));
-                return imageCache;
+            try(PreparedStatement ps=conn.prepareStatement(sql)) {
+                ps.setString(1, cacheId);
+                ResultSet res = ps.executeQuery();
+                if (res.next()) {
+                    GeoImageCacheEntity imageCache = new GeoImageCacheEntity();
+                    imageCache.setCacheId(res.getString(1));
+                    imageCache.setMapId(res.getString(2));
+                    imageCache.setImageData(res.getString(3));
+                    return imageCache;
+                }
             }
 
         }catch (Exception ex){
             throw new GeoException(ex);
-        }finally {
-            DBHelper.close(ps);
-            DBHelper.close(conn);
         }
         return null;
     }

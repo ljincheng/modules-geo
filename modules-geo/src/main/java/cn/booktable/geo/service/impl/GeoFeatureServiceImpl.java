@@ -1,6 +1,5 @@
 package cn.booktable.geo.service.impl;
 
-import cn.booktable.geo.core.DBHelper;
 import cn.booktable.geo.core.GeoException;
 import cn.booktable.geo.core.GeoQuery;
 import cn.booktable.geo.core.GeoFeature;
@@ -20,6 +19,7 @@ import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.filter.text.cql2.CQL;
 import org.geotools.filter.text.cql2.CQLException;
 import org.geotools.geojson.feature.FeatureJSON;
+import org.geotools.jdbc.JDBCDataStore;
 import org.geotools.util.factory.Hints;
 import org.locationtech.jts.geom.Geometry;
 import org.opengis.feature.Property;
@@ -36,11 +36,13 @@ import java.util.*;
  * @author ljc
  */
 public class GeoFeatureServiceImpl implements GeoFeatureService {
-    GeoMapManageService geoMapManageService=new GeoMapManageServiceImpl();
+    GeoMapManageService geoMapManageService=null;
     static final FilterFactory2 FF = CommonFactoryFinder.getFilterFactory2();
     private DataStore  mDataStore;
-    {
-        mDataStore= DBHelper.dataStore();
+
+    public GeoFeatureServiceImpl(DataStore dataStore){
+        mDataStore=dataStore;
+        geoMapManageService=new GeoMapManageServiceImpl((JDBCDataStore) mDataStore);
     }
 
     private Query toFeatureQuery(GeoQuery geoQuery,String layerFilter){
@@ -288,7 +290,6 @@ public class GeoFeatureServiceImpl implements GeoFeatureService {
         assert(StringUtils.isNotBlank(query.getMapId()));
         assert(StringUtils.isNotBlank(query.getLayerSource()));
         assert(StringUtils.isNotBlank(query.getFilter()));
-//        List<SimpleFeature> result=new ArrayList<>();
         try {
             GeoMapLayerEntity mapLayerEntity= geoMapManageService.queryMapLayersByLayerId(query.getMapId(),query.getLayerSource());
             if(mapLayerEntity==null ){

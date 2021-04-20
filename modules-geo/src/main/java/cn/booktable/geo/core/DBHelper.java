@@ -4,7 +4,9 @@ import jdk.nashorn.internal.scripts.JD;
 import org.apache.commons.lang3.StringUtils;
 import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFinder;
+import org.geotools.data.Transaction;
 import org.geotools.jdbc.JDBCDataStore;
+import org.geotools.jdbc.JDBCDataStoreFactory;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -17,26 +19,28 @@ import java.util.*;
 public class DBHelper {
     private static Map<String,Object> mDBParam=null;
     private static JDBCDataStore mDataStore;
-    static {
-        Map<String, Object> params = new HashMap<>();
-        params.put("dbtype", "mysql");
-        params.put("host", "localhost");
-        params.put("port", 3306);
-        params.put("database", "geotools");
-        params.put("user", "dev");
-        params.put("passwd", "dev123");
-        mDBParam=params;
-        try {
-            mDataStore = (JDBCDataStore) DataStoreFinder.getDataStore(mDBParam);
-        }catch (IOException e){
-            e.printStackTrace();
-            throw new GeoException(e.fillInStackTrace());
-        }
-    }
+//    private static Map<String, Object> mDataStoreParams=new HashMap<>();
+//    static {
+//        Map<String, Object> params = new HashMap<>();
+//        params.put("dbtype", "mysql");
+//        params.put("host", "localhost");
+//        params.put("port", 3306);
+//        params.put("database", "geotools");
+//        params.put("user", "dev");
+//        params.put("passwd", "dev123");
+//        mDBParam=params;
+//        try {
+//            mDataStore = (JDBCDataStore) DataStoreFinder.getDataStore(mDBParam);
+//        }catch (IOException e){
+//            e.printStackTrace();
+//            throw new GeoException(e.fillInStackTrace());
+//        }
+//    }
 
     public static DataStore dataStore(){
         return mDataStore;
     }
+
 
 
     public static DataSource getDatabase(){
@@ -73,6 +77,26 @@ public class DBHelper {
             }
         }catch (Exception ex){
 
+        }
+    }
+
+    public static  void close(Transaction transaction){
+        try {
+            if (transaction != null) {
+                transaction.close();
+            }
+        }catch (Exception ex){
+
+        }
+    }
+
+    public static void rollback(Transaction transaction){
+        try {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+        }catch (IOException ex){
+            throw new GeoException(ex.fillInStackTrace());
         }
     }
 

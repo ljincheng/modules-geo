@@ -1,10 +1,7 @@
 package cn.booktable.appadmin.controller.geo;
 
 import cn.booktable.core.view.JsonView;
-import cn.booktable.geo.core.GeoFeature;
-import cn.booktable.geo.core.GeoFeatureRequest;
-import cn.booktable.geo.core.GeoQuery;
-import cn.booktable.geo.core.PaintParam;
+import cn.booktable.geo.core.*;
 import cn.booktable.geo.entity.GeoMapInfoEntity;
 import cn.booktable.geo.provider.GeoGeometryProvider;
 import cn.booktable.geo.provider.TileModelProvider;
@@ -21,6 +18,7 @@ import cn.booktable.util.AssertUtils;
 import cn.booktable.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,6 +29,7 @@ import javax.imageio.ImageIO;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
 import java.awt.image.BufferedImage;
 import java.io.OutputStream;
 import java.util.List;
@@ -45,10 +44,16 @@ import java.util.Map;
 public class GeoMapController {
     private static Logger logger= LoggerFactory.getLogger(GeoMapController.class);
 
-    GeoMapService mapService = new GeoMapServiceImpl();
-    GeoCacheService geoCacheService=new GeoCacheServiceImpl();
-    GeoMapManageService geoMapManageService = new GeoMapManageServiceImpl();
-    GeoFeatureService mGeoFeatureService=new GeoFeatureServiceImpl();
+    GeoEngine mGeoEngine=null;
+    @Autowired
+    DataSource dataSource;
+
+    private GeoEngine getGeoEngine(){
+        if(this.mGeoEngine==null){
+            this.mGeoEngine=new GeoEngineImpl(dataSource);
+        }
+        return this.mGeoEngine;
+    }
 
 
     /**
@@ -61,7 +66,7 @@ public class GeoMapController {
     public JsonView<String> reload(HttpServletRequest request, HttpServletResponse response,Boolean clearCache){
         JsonView<String> result=new JsonView<>();
         try {
-            mapService.reload(clearCache);
+            getGeoEngine().getGeoMapService().reload(clearCache);
             result.setCode(JsonView.CODE_SUCCESS);
             result.setMsg("OK");
         }catch (Exception ex){
@@ -76,7 +81,7 @@ public class GeoMapController {
     public JsonView<String> clearCache(HttpServletRequest request, HttpServletResponse response){
         JsonView<String> result=new JsonView<>();
         try {
-            geoCacheService.clearAll();
+            getGeoEngine().getGeoCacheService().clearAll();
             result.setCode(JsonView.CODE_SUCCESS);
             result.setMsg("OK");
         }catch (Exception ex){
@@ -108,7 +113,7 @@ public class GeoMapController {
                 param.setY(y);
             response.setContentType("image/png");
             final ServletOutputStream os = response.getOutputStream();
-            mapService.paint(param,os);
+            getGeoEngine().getGeoMapService().paint(param,os);
             os.flush();
         }catch (Exception ex){
             ex.printStackTrace();
