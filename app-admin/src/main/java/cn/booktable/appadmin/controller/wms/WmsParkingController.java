@@ -63,7 +63,7 @@ public class WmsParkingController {
                 return null;
             }
             OutputStream outputStream=response.getOutputStream();
-            geoFeatureService.writeFeature(geoQuery,outputStream);
+            geoFeatureService.writeFeatureByMapLayerSource(geoQuery,outputStream);
             outputStream.flush();
 
         }catch (Exception ex){

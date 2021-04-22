@@ -35,5 +35,8 @@ public interface GeoFeatureService {
 
     List<GeoFeature> queryFeature(GeoQuery query);
 
-     void writeFeature(GeoQuery query, Object output);
+
+    List<GeoFeature> queryFeatureByMapLayerId(GeoQuery query);
+
+     void writeFeatureByMapLayerSource(GeoQuery query, Object output);
 }

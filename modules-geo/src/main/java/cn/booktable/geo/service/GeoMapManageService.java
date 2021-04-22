@@ -19,6 +19,8 @@ public interface GeoMapManageService {
 
    GeoMapLayerEntity queryMapLayersByLayerId(String mapId,String layerId);
 
+   List<GeoMapLayerEntity> queryMapLayerByLayerSource(String mapId,String layerSource);
+
    /**
     * 创建项目地图
     * @param mapInfoEntity

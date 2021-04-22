@@ -72,10 +72,10 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
     }
 
     @Override
-    public GeoMapLayerEntity queryMapLayersByLayerId(String mapId, String layerId) {
+    public GeoMapLayerEntity queryMapLayersByLayerId(String mapId, String layerSource) {
         GeoMapLayerEntity mapLayerEntity=null;
         try (Transaction tran=new DefaultTransaction(); Connection conn=mDataStore.getConnection(tran)) {
-             List<GeoMapLayerEntity>   mapInfoList=mapLayerFullColumnListByMapId(conn,mapId,layerId);
+             List<GeoMapLayerEntity>   mapInfoList=mapLayerFullColumnListByMapId(conn,mapId,layerSource);
              tran.commit();
              if(mapInfoList!=null && mapInfoList.size()>0){
                  mapLayerEntity=mapInfoList.get(0);
@@ -85,6 +85,18 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
             throw new GeoException(ex);
         }
         return mapLayerEntity;
+    }
+
+    @Override
+    public List<GeoMapLayerEntity> queryMapLayerByLayerSource(String mapId, String layerSource) {
+        List<GeoMapLayerEntity>  mapInfoList=null;
+        try (Transaction tran=new DefaultTransaction(); Connection conn=mDataStore.getConnection(tran)) {
+             mapInfoList=mapLayerFullColumnListByMapId(conn,mapId,layerSource);
+            tran.commit();
+        }catch (Exception ex){
+            throw new GeoException(ex);
+        }
+        return mapInfoList;
     }
 
     @Override
@@ -152,13 +164,55 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
         return mapInfoList;
     }
 
+    private GeoMapLayerEntity mapLayerFullColumnListByLayerId(Connection conn, String mapId,String layerId) {
+        GeoMapLayerEntity mapLayerEntity=null;
+        String sql="SELECT t2.id, t2.map_id,  t2.layer_order, t2.display, t2.style_id,t2.layer_source,t2.layer_type,t2.layer_filter,t2.envelope,t2.title \n" +
+                ",t3.title as s_i_title, t3.style_type, t3.content \n" +
+                "from geo_map_layer t2 \n" +
+                "left join geo_style_info t3 on t3.style_id=t2.style_id\n" +
+                "where t2.map_id=? and t2.id=?";
+        PreparedStatement ps=null;
+        try {
+
+                ps = conn.prepareStatement(sql);
+                ps.setString(1, mapId);
+                ps.setString(2, layerId);
+
+            ResultSet res = ps.executeQuery();
+            while (res.next()) {
+                GeoMapLayerEntity obj = new GeoMapLayerEntity();
+                obj.setId(res.getString(1));
+                obj.setMapId(res.getString(2));
+                obj.setLayerOrder(res.getInt(3));
+                obj.setDisplay(res.getInt(4));
+                obj.setStyleId(res.getString(5));
+                obj.setLayerSource(res.getString(6));
+                obj.setLayerType(res.getString(7));
+                obj.setLayerFilter(res.getString(8));
+                obj.setEnvelope(res.getString(9));
+                obj.setTitle(res.getString(10));
+                GeoStyleInfoEntity styleInfo=new GeoStyleInfoEntity();
+                styleInfo.setStyleId(obj.getStyleId());
+                styleInfo.setTitle(res.getString(11));
+                styleInfo.setStyleType(res.getString(12));
+                styleInfo.setContent(res.getString(13));
+                obj.setStyleInfoEntity(styleInfo);
+                mapLayerEntity= obj;
+            }
+
+        }catch (Exception ex){
+            throw new GeoException(ex);
+        }finally {
+            DBHelper.close(ps);
+        }
+        return mapLayerEntity;
+    }
+
     private List<GeoMapLayerEntity> mapLayerFullColumnListByMapId(Connection conn, String mapId,String layerSource) {
         List<GeoMapLayerEntity> mapInfoList=new ArrayList<GeoMapLayerEntity>();
         String sql="SELECT t2.id, t2.map_id,  t2.layer_order, t2.display, t2.style_id,t2.layer_source,t2.layer_type,t2.layer_filter,t2.envelope,t2.title \n" +
-//                ",t1.title as l_i_title, t1.layer_name, t1.layer_type, t1.envelope, t1.layer_filter, t1.create_time as l_i_ctime, t1.update_time as l_i_utime\n" +
                 ",t3.title as s_i_title, t3.style_type, t3.content \n" +
                 "from geo_map_layer t2 \n" +
-//                "left join geo_layer_info t1 on  t1.layer_id=t2.layer_id\n" +
                 "left join geo_style_info t3 on t3.style_id=t2.style_id\n" +
                 "where t2.map_id=? ";
         PreparedStatement ps=null;
@@ -180,7 +234,6 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
                 GeoMapLayerEntity obj = new GeoMapLayerEntity();
                 obj.setId(res.getString(1));
                 obj.setMapId(res.getString(2));
-//                obj.setLayerId(res.getString(3));
                 obj.setLayerOrder(res.getInt(3));
                 obj.setDisplay(res.getInt(4));
                 obj.setStyleId(res.getString(5));
