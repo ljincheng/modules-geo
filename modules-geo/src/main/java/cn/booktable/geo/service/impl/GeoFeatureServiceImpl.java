@@ -164,25 +164,21 @@ public class GeoFeatureServiceImpl implements GeoFeatureService {
         if(mapLayerEntity==null ){
             return false;
         }
-
-        try (Transaction transaction = new DefaultTransaction()) {
+        try  {
             SimpleFeatureSource featureSource= mDataStore.getFeatureSource(mapLayerEntity.getLayerSource());
             if(featureSource==null){
                 return false;
             }
             String layerFilter= mapLayerEntity.getLayerFilter();
             Query readQuery= toFeatureQuery(query,layerFilter);
-             try {
+             try(Transaction transaction = new DefaultTransaction()) {
                  SimpleFeatureStore store = (SimpleFeatureStore) featureSource;
                  store.setTransaction(transaction);
                  store.removeFeatures(readQuery.getFilter());
                  transaction.commit();
-             }catch (Exception ex){
-                 transaction.rollback();
              }
 
         } catch (Exception e) {
-            e.printStackTrace();
             throw new GeoException(e.fillInStackTrace());
         }
         return true;

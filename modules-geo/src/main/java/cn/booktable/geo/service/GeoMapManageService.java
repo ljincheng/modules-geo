@@ -21,9 +21,9 @@ public interface GeoMapManageService {
 
    /**
     * 创建项目地图
-    * @param projectId
+    * @param mapInfoEntity
     * @return
     */
-   boolean createProjectMap(String mapId,String projectId,Integer projectOrder,String title,String subTitle);
+   boolean createProjectMap(GeoMapInfoEntity mapInfoEntity);
 
 }

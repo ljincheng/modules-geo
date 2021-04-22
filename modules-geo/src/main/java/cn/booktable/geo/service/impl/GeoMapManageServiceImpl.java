@@ -16,14 +16,11 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * @author ljc
  */
 public class GeoMapManageServiceImpl implements GeoMapManageService {
-    private static final String TB_PARKING_POLYGON="geo_parking_polygon";
-        private static final String STYLEID_PARKING_POLYGON="parking_polygon";
     private JDBCDataStore mDataStore;
     public GeoMapManageServiceImpl(JDBCDataStore dataStore){
         mDataStore=dataStore;
@@ -91,10 +88,10 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
     }
 
     @Override
-    public boolean createProjectMap(String mapId,String projectId,Integer projectOrder,String title,String subTitle) {
+    public boolean createProjectMap(GeoMapInfoEntity mapInfoEntity) {
         boolean result=false;
         try (Transaction tran=new DefaultTransaction(); Connection conn=mDataStore.getConnection(tran)){
-            result=  this.createProjectMap(conn,mapId,projectId,projectOrder,title,subTitle);
+            result= this.createProjectMap(conn,mapInfoEntity);
             tran.commit();
         }catch (Exception ex){
             throw new GeoException(ex);
@@ -104,7 +101,7 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
 
     private GeoMapInfoEntity findMapInfoEntity(Connection conn, String mapId){
         GeoMapInfoEntity mapInfoEntity=null;
-        String sql="SELECT map_id, title, bbox,zoom,min_zoom,max_zoom,center,map_url,map_config,project_id,sub_title,project_order FROM geo_map_info WHERE  map_id=?";
+        String sql="SELECT map_id, title, bbox,zoom,min_zoom,max_zoom,center,project_id,sub_title,project_order FROM geo_map_info WHERE  map_id=?";
         try ( PreparedStatement ps= conn.prepareStatement(sql)){
             ps.setString(1, mapId);
             ResultSet res = ps.executeQuery();
@@ -117,11 +114,9 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
                 mapInfoEntity.setMinZoom(res.getInt(5));
                 mapInfoEntity.setMaxZoom(res.getInt(6));
                 mapInfoEntity.setCenter(res.getString(7));
-                mapInfoEntity.setMapUrl(res.getString(8));
-                mapInfoEntity.setMapConfig(res.getString(9));
-                mapInfoEntity.setProjectId(res.getString(10));
-                mapInfoEntity.setSubTitle(res.getString(11));
-                mapInfoEntity.setProjectOrder(res.getInt(12));
+                mapInfoEntity.setProjectId(res.getString(8));
+                mapInfoEntity.setSubTitle(res.getString(9));
+                mapInfoEntity.setProjectOrder(res.getInt(10));
             }
         }catch (Exception ex){
             throw new GeoException(ex);
@@ -133,7 +128,7 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
 
     private List<GeoMapInfoEntity> projectMapInfoListByProjectId(Connection conn,  String projectId){
         List<GeoMapInfoEntity> mapInfoList=new ArrayList<>();
-        String sql="SELECT map_id, title, bbox,zoom,min_zoom,max_zoom,center,map_url,map_config,project_id,sub_title,project_order FROM geo_map_info WHERE  project_id=? order by  project_order desc";
+        String sql="SELECT map_id, title, bbox,zoom,min_zoom,max_zoom,center,project_id,sub_title,project_order FROM geo_map_info WHERE  project_id=? order by  project_order desc";
         try (PreparedStatement ps=conn.prepareStatement(sql)){
             ps.setString(1, projectId);
             ResultSet res = ps.executeQuery();
@@ -146,11 +141,9 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
                 mapInfoEntity.setMinZoom(res.getInt(5));
                 mapInfoEntity.setMaxZoom(res.getInt(6));
                 mapInfoEntity.setCenter(res.getString(7));
-                mapInfoEntity.setMapUrl(res.getString(8));
-                mapInfoEntity.setMapConfig(res.getString(9));
-                mapInfoEntity.setProjectId(res.getString(10));
-                mapInfoEntity.setSubTitle(res.getString(11));
-                mapInfoEntity.setProjectOrder(res.getInt(12));
+                mapInfoEntity.setProjectId(res.getString(8));
+                mapInfoEntity.setSubTitle(res.getString(9));
+                mapInfoEntity.setProjectOrder(res.getInt(10));
                 mapInfoList.add(mapInfoEntity);
             }
         }catch (Exception ex){
@@ -284,41 +277,58 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
     }
 
 
-    public boolean createProjectMap(Connection conn,String mapId,String projectId,Integer projectOrder,String title,String subTitle) {
-        String sql1="INSERT INTO geo_map_info (map_id, project_id, project_order, title, sub_title, bbox, zoom, min_zoom, max_zoom, center, map_url, map_config, create_time, update_time)\n" +
-                "VALUES(?, ?, ?, ?, ?, '-180,-90,180,90', 2, 0, 7, '0,0', ?, NULL, ?, ?);";
+    public boolean createProjectMap(Connection conn,GeoMapInfoEntity mapInfo) {
+        boolean result=false;
+        String sql1="INSERT INTO geo_map_info (map_id, project_id, project_order, title, sub_title, bbox, zoom, min_zoom, max_zoom, center, create_time, update_time)\n" +
+                "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
         String sql2="INSERT INTO geo_map_layer (id, map_id, layer_order, display, style_id, layer_source, layer_type, layer_filter, title, envelope)\n" +
-                "VALUES(?, ?, 2, 1,?, ?, 'POLYGON', ?, '车位图层', NULL);";
+                "VALUES(?, ?, ?, ?,?, ?, ?, ?, ?, ?);";
         PreparedStatement ps=null;
         try {
             ps = conn.prepareStatement(sql1);
             java.sql.Date now=new java.sql.Date(new Date().getTime());
-            ps.setString(1, mapId);
-            ps.setString(2, projectId);
-            ps.setInt(3, projectOrder==null?1:projectOrder.intValue());
-            ps.setString(4, title);
-            ps.setString(5, subTitle);
-            ps.setString(6, String.format("/geo/map/image/%s/{z}/{x}/{y}.png",mapId));
-            ps.setDate(7, now);
-            ps.setDate(8, now);
+            ps.setString(1, mapInfo.getMapId());
+            ps.setString(2, mapInfo.getProjectId());
+            ps.setInt(3, mapInfo.getProjectOrder());
+            ps.setString(4, mapInfo.getTitle());
+            ps.setString(5, mapInfo.getSubTitle());
+            ps.setString(6,mapInfo.getBbox());
+            ps.setInt(7,mapInfo.getZoom());
+            ps.setInt(8,mapInfo.getMinZoom());
+            ps.setInt(9,mapInfo.getMaxZoom());
+            ps.setString(10,mapInfo.getCenter());
+            ps.setDate(11, now);
+            ps.setDate(12, now);
             if (ps.execute()) {
-                ps = conn.prepareStatement(sql2);
-                String layerId= UUID.randomUUID().toString().replace("-","");
-                ps.setString(1, layerId);
-                ps.setString(2, mapId);
-                ps.setString(3, STYLEID_PARKING_POLYGON);
-                ps.setString(4, TB_PARKING_POLYGON);
-                ps.setString(5, "map_id='"+mapId+"'");
-                if (ps.execute()) {
-                    return true;
+
+                if(mapInfo.getMapLayers()!=null && mapInfo.getMapLayers().size()>0){
+
+                    for(GeoMapLayerEntity mapLayer: mapInfo.getMapLayers()) {
+
+                        ps = conn.prepareStatement(sql2);
+                        ps.setString(1,mapLayer.getId());
+                        ps.setString(2, mapInfo.getMapId());
+                        ps.setInt(3, mapLayer.getLayerOrder());
+                        ps.setInt(4, mapLayer.getDisplay());
+                        ps.setString(5, mapLayer.getStyleId());
+                        ps.setString(6, mapLayer.getLayerSource());
+                        ps.setString(7, mapLayer.getLayerType());
+                        ps.setString(8, mapLayer.getLayerFilter());
+                        ps.setString(9, mapLayer.getTitle());
+                        ps.setString(10, mapLayer.getEnvelope());
+                        if (!ps.execute()) {
+                            throw new GeoException("保存图层失败");
+                        }
+                    }
                 }
+                result=true;
             }
         }catch (Exception ex){
             throw new GeoException(ex);
         }finally {
             DBHelper.close(ps);
         }
-        return false;
+        return result;
     }
 
 }

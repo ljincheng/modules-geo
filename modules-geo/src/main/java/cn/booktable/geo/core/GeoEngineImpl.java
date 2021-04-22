@@ -21,7 +21,7 @@ import java.util.Map;
  * @author ljc
  */
 public class GeoEngineImpl implements GeoEngine{
-    private static Map<String, Object> mDataStoreParams=new HashMap<>();
+//    private static Map<String, Object> mDataStoreParams=new HashMap<>();
     private JDBCDataStore mDataStore;
     private GeoMapManageService mGeoMapManageService;
     private GeoMapService mGeoMapService;
@@ -29,21 +29,32 @@ public class GeoEngineImpl implements GeoEngine{
     private GeoCacheService mGeoCacheService;
 
     public GeoEngineImpl(DataSource dataSource){
-        initDataStore(dataSource);
+        Map<String, Object> mDataStoreParams=new HashMap<>();
+        mDataStoreParams.put(JDBCDataStoreFactory.DATASOURCE.key, dataSource);
+        mDataStoreParams.put(JDBCDataStoreFactory.BATCH_INSERT_SIZE.key, 2000);
+        init(mDataStoreParams);
+    }
+
+    public GeoEngineImpl(Map<String,Object> param){
+        init(param);
+    }
+
+    private void init(Map<String,Object> param){
+        initDataStore(param);
         mGeoFeatureService=new GeoFeatureServiceImpl(mDataStore);
         mGeoCacheService=new GeoCacheServiceImpl(mDataStore);
         mGeoMapManageService=new GeoMapManageServiceImpl(mDataStore);
         mGeoMapService=new GeoMapServiceImpl(this);
     }
 
-    private  void initDataStore(DataSource dataSource){
+    private  void initDataStore(Map<String,Object> param){
         try{
-            mDataStoreParams.put(JDBCDataStoreFactory.DATASOURCE.key, dataSource);
-            mDataStoreParams.put(JDBCDataStoreFactory.BATCH_INSERT_SIZE.key, 2000);
-            mDataStore = (JDBCDataStore) DataStoreFinder.getDataStore(mDataStoreParams);
+//            mDataStoreParams.put(JDBCDataStoreFactory.DATASOURCE.key, dataSource);
+//            mDataStoreParams.put(JDBCDataStoreFactory.BATCH_INSERT_SIZE.key, 2000);
+            mDataStore = (JDBCDataStore) DataStoreFinder.getDataStore(param);
             if (mDataStore == null) {
                 JDBCDataStoreFactory factory = new MySQLDataStoreFactory();
-                mDataStore = factory.createDataStore(mDataStoreParams);
+                mDataStore = factory.createDataStore(param);
             }
         } catch (Exception e) {
             throw new GeoException(e.fillInStackTrace());

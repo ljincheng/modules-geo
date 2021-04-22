@@ -1,7 +1,6 @@
 package cn.booktable.geo.core;
 
 import lombok.Data;
-import org.locationtech.jts.geom.Geometry;
 
 import java.util.HashMap;
 import java.util.Map;

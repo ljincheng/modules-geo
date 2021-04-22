@@ -1,35 +1,26 @@
 package cn.booktable.geo.service.impl;
 
-//import cn.booktable.geo.core.DBHelper;
 import cn.booktable.geo.core.GeoException;
 import cn.booktable.geo.core.GeoQuery;
 import cn.booktable.geo.core.QueryGenerator;
 import cn.booktable.geo.entity.GeoImageCacheEntity;
-import cn.booktable.geo.provider.GeoGeometryProvider;
 import cn.booktable.geo.service.GeoCacheService;
 import org.geotools.data.*;
 import org.geotools.data.simple.SimpleFeatureCollection;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.jdbc.JDBCDataStore;
 import org.geotools.util.factory.Hints;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.Polygon;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.filter.Filter;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * @author ljc

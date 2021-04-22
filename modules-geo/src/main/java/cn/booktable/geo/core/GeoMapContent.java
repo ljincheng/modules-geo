@@ -2,7 +2,6 @@ package cn.booktable.geo.core;
 
 import cn.booktable.geo.entity.GeoMapLayerEntity;
 import cn.booktable.geo.entity.GeoStyleInfoEntity;
-import cn.booktable.geo.provider.GeoMapProvider;
 import org.apache.commons.lang3.StringUtils;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;

@@ -1,11 +1,8 @@
 package cn.booktable.geo.provider;
 
 import cn.booktable.geo.core.GeoException;
-import cn.booktable.geo.core.GeoFeature;
 import org.apache.commons.lang3.StringUtils;
 import org.geotools.geojson.geom.GeometryJSON;
-import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.WKTReader;

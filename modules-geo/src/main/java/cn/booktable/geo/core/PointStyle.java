@@ -2,7 +2,6 @@ package cn.booktable.geo.core;
 
 import lombok.Data;
 
-import java.awt.*;
 
 /**
  * @author ljc

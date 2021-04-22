@@ -1,4 +1,4 @@
-package cn.booktable.appadmin.controller.geo;
+package cn.booktable.appadmin.controller.wms;
 
 import lombok.Data;
 
@@ -6,7 +6,7 @@ import lombok.Data;
  * @author ljc
  */
 @Data
-public class GeoQueryBo {
+public class GeoQueryVO {
     private String layerSource;
     private String filter;
     private String featureId;

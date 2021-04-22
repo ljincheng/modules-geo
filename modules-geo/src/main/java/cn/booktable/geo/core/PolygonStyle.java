@@ -1,9 +1,6 @@
 package cn.booktable.geo.core;
 
 import lombok.Data;
-import org.geotools.styling.Font;
-
-import java.awt.*;
 
 /**
  * @author ljc

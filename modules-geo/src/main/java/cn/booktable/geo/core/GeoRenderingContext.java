@@ -1,8 +1,6 @@
 package cn.booktable.geo.core;
 
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.geotools.map.MapContent;
-import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.renderer.GTRenderer;
 import org.geotools.renderer.lite.StreamingRenderer;
 

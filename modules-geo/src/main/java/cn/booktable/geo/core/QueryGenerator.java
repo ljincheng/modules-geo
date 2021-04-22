@@ -24,32 +24,6 @@ public class QueryGenerator {
         return true;
     }
 
-//    public static boolean hasLayerName(GeoQuery query){
-//        if(query==null || query.getLayerName()==null){
-//            return false;
-//        }
-//        if(StringUtils.isBlank(query.getLayerName())){
-//            return false;
-//        }
-//        return true;
-//    }
-
-//    public static Filter getFilter(GeoQuery query){
-//        Filter queryFilter=null;
-//        try {
-//            Object filter = query.getFilter();
-//            if (filter instanceof String) {
-//                queryFilter = CQL.toFilter((String) filter);
-//            } else if (filter instanceof Filter) {
-//                queryFilter = (Filter) filter;
-//            }
-//        }catch (CQLException e){
-//            e.printStackTrace();
-//            throw new GeoException(e);
-//        }
-//        return queryFilter;
-//    }
-
     public static Filter toFilter(String filter){
         Filter queryFilter=null;
         try {
