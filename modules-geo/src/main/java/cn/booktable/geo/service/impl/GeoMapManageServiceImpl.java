@@ -29,19 +29,19 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
     @Override
     public List<GeoMapLayerEntity> fullMapLayersByMapId(String mapId) {
         List<GeoMapLayerEntity> mapInfoList=null;
-        Transaction tran =null;
-        Connection conn=null;
-        try  {
-            tran = new DefaultTransaction();
-            conn= mDataStore.getConnection(tran);
+//        Transaction tran =null;
+//        Connection conn=null;
+        try (Transaction tran =new DefaultTransaction();Connection conn=mDataStore.getConnection(tran)) {
+//            tran = new DefaultTransaction();
+//            conn= mDataStore.getConnection(tran);
             mapInfoList=mapLayerFullColumnListByMapId(conn,mapId,null);
             tran.commit();
         }catch (Exception ex){
-            DBHelper.rollback(tran);
+//            DBHelper.rollback(tran);
             throw new GeoException(ex);
-        }finally {
-            DBHelper.close(conn);
-            DBHelper.close(tran);
+//        }finally {
+//            DBHelper.close(conn);
+//            DBHelper.close(tran);
         }
         return mapInfoList;
     }
@@ -72,10 +72,10 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
     }
 
     @Override
-    public GeoMapLayerEntity queryMapLayersByLayerId(String mapId, String layerSource) {
+    public GeoMapLayerEntity queryMapLayersByLayerId(String mapId, String layerId) {
         GeoMapLayerEntity mapLayerEntity=null;
         try (Transaction tran=new DefaultTransaction(); Connection conn=mDataStore.getConnection(tran)) {
-             List<GeoMapLayerEntity>   mapInfoList=mapLayerFullColumnListByMapId(conn,mapId,layerSource);
+             List<GeoMapLayerEntity>   mapInfoList=mapLayerFullColumnListByMapId(conn,mapId,layerId);
              tran.commit();
              if(mapInfoList!=null && mapInfoList.size()>0){
                  mapLayerEntity=mapInfoList.get(0);

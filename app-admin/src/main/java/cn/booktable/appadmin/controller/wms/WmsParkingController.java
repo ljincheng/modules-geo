@@ -105,7 +105,7 @@ public class WmsParkingController {
             GeoQuery query=new GeoQuery();
             query.setMapId(mapId);
             query.setLayerSource(TB_PARKING_POLYGON);
-            query.setFilter(queryBo.getFilter());
+            query.setFilter("mapId='"+mapId+"'");
             query.setFeatureId(queryBo.getFeatureId());
             List<GeoFeature> featureList=geoFeatureService.queryFeature(query);
             if(featureList!=null && featureList.size()>0){

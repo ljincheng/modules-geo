@@ -158,19 +158,19 @@ public class GeoFeatureServiceImpl implements GeoFeatureService {
 
     @Override
     public boolean deleteFeature(GeoQuery query) {
-        assert(query!=null &&  QueryGenerator.hasFilter(query));
+        assert(query!=null &&  StringUtils.isNotBlank(query.getLayerSource()));
 
-        GeoMapLayerEntity mapLayerEntity= geoMapManageService.queryMapLayersByLayerId(query.getMapId(),query.getLayerSource());
-        if(mapLayerEntity==null ){
-            return false;
-        }
+//        GeoMapLayerEntity mapLayerEntity= geoMapManageService.queryMapLayersByLayerId(query.getMapId(),query.getLayerSource());
+//        if(mapLayerEntity==null ){
+//            return false;
+//        }
         try  {
-            SimpleFeatureSource featureSource= mDataStore.getFeatureSource(mapLayerEntity.getLayerSource());
+            SimpleFeatureSource featureSource= mDataStore.getFeatureSource(query.getLayerSource());
             if(featureSource==null){
                 return false;
             }
-            String layerFilter= mapLayerEntity.getLayerFilter();
-            Query readQuery= toFeatureQuery(query,layerFilter);
+//            String layerFilter= mapLayerEntity.getLayerFilter();
+            Query readQuery= toFeatureQuery(query,null);
              try(Transaction transaction = new DefaultTransaction()) {
                  SimpleFeatureStore store = (SimpleFeatureStore) featureSource;
                  store.setTransaction(transaction);
