@@ -82,13 +82,11 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
     @Override
     public GeoMapLayerEntity queryMapLayersByLayerId(String mapId, String layerId) {
         GeoMapLayerEntity mapLayerEntity=null;
-        try (Transaction tran=new DefaultTransaction(); Connection conn=mDataStore.getConnection(tran)) {
-             List<GeoMapLayerEntity>   mapInfoList=mapLayerFullColumnListByMapId(conn,mapId,layerId);
-             tran.commit();
-             if(mapInfoList!=null && mapInfoList.size()>0){
-                 mapLayerEntity=mapInfoList.get(0);
-             }
-
+        try{
+            try (Transaction tran=new DefaultTransaction(); Connection conn=mDataStore.getConnection(tran)) {
+                mapLayerEntity = mapLayerFullColumnListByLayerId(conn, mapId, layerId);
+                tran.commit();
+            }
         }catch (Exception ex){
             throw new GeoException(ex);
         }
