@@ -15,7 +15,9 @@ public interface GeoCacheService {
      */
     boolean saveCache(GeoImageCacheEntity imageCache);
 
-    boolean deleteCache(GeoQuery query);
+    boolean deleteCache(String filter);
+
+    boolean deleteCacheByMapId(String mapId);
 
     boolean clearAll();
 
