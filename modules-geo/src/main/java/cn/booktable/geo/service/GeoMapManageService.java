@@ -27,5 +27,6 @@ public interface GeoMapManageService {
     * @return
     */
    boolean createProjectMap(GeoMapInfoEntity mapInfoEntity);
+   boolean addMapLayer(GeoMapLayerEntity mapLayerEntity);
 
 }

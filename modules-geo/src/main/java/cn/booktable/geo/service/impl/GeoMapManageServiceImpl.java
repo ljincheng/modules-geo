@@ -6,22 +6,30 @@ import cn.booktable.geo.entity.GeoMapInfoEntity;
 import cn.booktable.geo.entity.GeoMapLayerEntity;
 import cn.booktable.geo.entity.GeoStyleInfoEntity;
 import cn.booktable.geo.service.GeoMapManageService;
+import cn.booktable.geo.utils.FeatureUtil;
+import org.geotools.data.DataUtilities;
 import org.geotools.data.DefaultTransaction;
 import org.geotools.data.Transaction;
+import org.geotools.data.simple.SimpleFeatureCollection;
+import org.geotools.data.simple.SimpleFeatureStore;
+import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.jdbc.JDBCDataStore;
+import org.geotools.util.factory.Hints;
+import org.opengis.feature.simple.SimpleFeature;
+import org.opengis.feature.simple.SimpleFeatureType;
+import org.opengis.feature.type.AttributeDescriptor;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author ljc
  */
 public class GeoMapManageServiceImpl implements GeoMapManageService {
     private JDBCDataStore mDataStore;
+    public static final String TB_MAP_LAYER="geo_map_layer";
     public GeoMapManageServiceImpl(JDBCDataStore dataStore){
         mDataStore=dataStore;
     }
@@ -384,4 +392,20 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
         return result;
     }
 
+
+    @Override
+    public boolean addMapLayer(GeoMapLayerEntity mapLayerEntity) {
+        Map<String, Object> atts = new HashMap<>();
+        atts.put("id",mapLayerEntity.getId());
+        atts.put("map_id",mapLayerEntity.getMapId());
+        atts.put("display",mapLayerEntity.getDisplay());
+        atts.put("envelope",mapLayerEntity.getEnvelope());
+        atts.put("layer_filter",mapLayerEntity.getLayerFilter());
+        atts.put("layer_order",mapLayerEntity.getLayerOrder());
+        atts.put("layer_source",mapLayerEntity.getLayerSource());
+        atts.put("layer_type",mapLayerEntity.getLayerType());
+        atts.put("style_id",mapLayerEntity.getStyleId());
+        atts.put("title",mapLayerEntity.getTitle());
+        return FeatureUtil.addFeature(mDataStore,TB_MAP_LAYER,atts,mapLayerEntity.getId());
+    }
 }
