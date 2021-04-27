@@ -41,13 +41,13 @@ public class GeoMapServiceImpl implements GeoMapService {
 
     @Override
     public void reload(Boolean clearCacheImage) {
-        GeoQuery query=new GeoQuery();
+//        GeoQuery query=new GeoQuery();
         for(String mapId: mMapContentMap.keySet()){
             GeoMapContent map=mMapContentMap.get(mapId);
             map.cleanCache();
             if(clearCacheImage!=null && clearCacheImage){
-                query.setFilter("map_id='"+mapId+"'");
-                geoCacheService.deleteCache(query);
+//                query.setFilter("map_id='"+mapId+"'");
+                geoCacheService.deleteCacheByMapId(mapId);
             }
         }
     }
