@@ -98,4 +98,40 @@ public class FeatureUtil {
         }
         return true;
     }
+
+    public static boolean modifyFeature(JDBCDataStore mDataStore, String featureName,String[] names,Object[] values,String filter){
+        try (Transaction transaction = new DefaultTransaction()) {
+            SimpleFeatureStore featureSource= (SimpleFeatureStore)mDataStore.getFeatureSource(featureName);
+            featureSource.setTransaction(transaction);
+            if(featureSource==null){
+                throw new GeoException("图层不存在");
+            }
+            SimpleFeatureType schema = featureSource.getSchema();
+            featureSource.modifyFeatures(names,values,QueryGenerator.toFilter(filter));
+            transaction.commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new GeoException(e.fillInStackTrace());
+        }
+        return true;
+    }
+
+    public static boolean modifyFeatureById(JDBCDataStore mDataStore, String featureName,String[] names,Object[] values,String id){
+        try (Transaction transaction = new DefaultTransaction()) {
+            SimpleFeatureStore featureSource= (SimpleFeatureStore)mDataStore.getFeatureSource(featureName);
+            featureSource.setTransaction(transaction);
+            if(featureSource==null){
+                throw new GeoException("图层不存在");
+            }
+            Set<FeatureId> selected = new HashSet<FeatureId>();
+            selected.add(FF.featureId(id));
+            SimpleFeatureType schema = featureSource.getSchema();
+            featureSource.modifyFeatures(names,values,FF.id(selected));
+            transaction.commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new GeoException(e.fillInStackTrace());
+        }
+        return true;
+    }
 }

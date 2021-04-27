@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import javax.servlet.ServletOutputStream;
@@ -112,5 +113,16 @@ public class WmsMapController {
           return JsonView.error("系统异常");
         }
 
+    }
+
+    @RequestMapping("/layerOrderChange/{mapId}")
+    public JsonView<String> layerOrderChange(HttpServletRequest request, HttpServletResponse response, @PathVariable("mapId") String mapId, @RequestBody WmsLayerOrderChangeVO orderChangeVO){
+        try {
+           geoMapManageService.modifyMapLayerOrder(mapId,orderChangeVO.getOldIndex(),orderChangeVO.getNewIndex());
+            return JsonView.ok("OK");
+        }catch (Exception ex){
+            logger.error("重载异常",ex);
+            return JsonView.error("系统异常");
+        }
     }
 }

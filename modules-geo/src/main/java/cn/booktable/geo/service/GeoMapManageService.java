@@ -29,5 +29,6 @@ public interface GeoMapManageService {
    boolean createProjectMap(GeoMapInfoEntity mapInfoEntity);
    boolean addMapLayer(GeoMapLayerEntity mapLayerEntity);
    boolean deleteMapLayer(String layerId);
+   boolean modifyMapLayerOrder(String mapId,int oldIndex,int newIndex);
 
 }

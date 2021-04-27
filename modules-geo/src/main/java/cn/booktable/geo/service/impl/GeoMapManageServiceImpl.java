@@ -411,4 +411,57 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
     public boolean deleteMapLayer(String layerId) {
         return FeatureUtil.deleteFeatureById(mDataStore,TB_MAP_LAYER,layerId);
     }
+
+    @Override
+    public boolean modifyMapLayerOrder(String mapId, int oldIndex, int newIndex) {
+        List<GeoMapLayerEntity> layerEntityList=fullMapLayersByMapId(mapId);
+        if(layerEntityList!=null && layerEntityList.size()>0){
+            int num=layerEntityList.size();
+
+            if(num>oldIndex && num >newIndex){
+                GeoMapLayerEntity oldLayer=layerEntityList.get(oldIndex);
+                GeoMapLayerEntity newLayer=layerEntityList.get(newIndex);
+
+                boolean hasChange=false;
+                List<GeoMapLayerEntity> newLayerList=new ArrayList<>();
+                if(oldIndex > newIndex){
+                    hasChange=true;
+                    // >0,1,2^,3,4,5,6,7,8
+                    for(int i=0;i<num;i++){
+                        if(i<newIndex){
+                            newLayerList.add(layerEntityList.get(i));
+                        }else if(i==newIndex){
+                            newLayerList.add(oldLayer);
+                            newLayerList.add(layerEntityList.get(i));
+                        }else if(i!=oldIndex){
+                            newLayerList.add(layerEntityList.get(i<oldIndex?i:(i-1)));
+                        }
+                    }
+                }else if(oldIndex<newIndex){
+                    hasChange=true;
+                    // 1,2,^3,4,>5,6,7,8
+                    for(int i=0;i<num;i++){
+                        if(i<oldIndex){
+                            newLayerList.add(layerEntityList.get(i));
+                        }else if(i==newIndex){
+                            newLayerList.add(layerEntityList.get(i));
+                            newLayerList.add(oldLayer);
+                        }else if(i!=oldIndex){
+                            newLayerList.add(layerEntityList.get(i<newIndex?i:(i-1)));
+                        }
+                    }
+                }
+//                layerEntityList.add(newIndex,oldLayer);
+
+                String[] names=new String[]{"layer_order"};
+                if(hasChange) {
+                    for(int i=0,k=newLayerList.size();i<k;i++) {
+                        FeatureUtil.modifyFeatureById(mDataStore, TB_MAP_LAYER, names, new Object[]{i}, newLayerList.get(i).getId());
+                    }
+                }
+
+            }
+        }
+        return false;
+    }
 }
