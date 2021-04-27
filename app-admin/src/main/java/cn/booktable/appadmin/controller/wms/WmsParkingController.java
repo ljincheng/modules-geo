@@ -82,9 +82,9 @@ public class WmsParkingController {
             feature.getProperties().put("map_id",mapId);
             boolean res= geoFeatureService.addFeature(feature);
             if(res){
-                GeoQuery geoQuery=new GeoQuery();
-                geoQuery.setFilter("BBOX(geom,"+ GeoGeometryProvider.getBBoxString(feature.getGeometry())+")");
-                geoCacheService.deleteCache(geoQuery);
+//                GeoQuery geoQuery=new GeoQuery();
+//                geoQuery.setFilter("BBOX(geom,"+ GeoGeometryProvider.getBBoxString(feature.getGeometry())+")");
+                geoCacheService.deleteCache("BBOX(geom,"+ GeoGeometryProvider.getBBoxString(feature.getGeometry())+")");
                 return JsonView.ok("OK",res);
             }
             return JsonView.error("操作失败");
@@ -111,9 +111,9 @@ public class WmsParkingController {
             if(featureList!=null && featureList.size()>0){
                 geoFeatureService.deleteFeature(query);
                 for(GeoFeature feature:featureList) {
-                    GeoQuery geoQuery = new GeoQuery();
-                    geoQuery.setFilter("BBOX(geom," + GeoGeometryProvider.getBBoxString(feature.getGeometry()) + ")");
-                    geoCacheService.deleteCache(geoQuery);
+//                    GeoQuery geoQuery = new GeoQuery();
+//                    geoQuery.setFilter("BBOX(geom," + GeoGeometryProvider.getBBoxString(feature.getGeometry()) + ")");
+                    geoCacheService.deleteCache("BBOX(geom," + GeoGeometryProvider.getBBoxString(feature.getGeometry()) + ")");
                 }
                 return JsonView.ok(featureList.size());
 
