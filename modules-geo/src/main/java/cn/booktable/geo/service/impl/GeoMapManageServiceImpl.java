@@ -408,4 +408,9 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
         atts.put("title",mapLayerEntity.getTitle());
         return FeatureUtil.addFeature(mDataStore,TB_MAP_LAYER,atts,mapLayerEntity.getId());
     }
+
+    @Override
+    public boolean deleteMapLayer(String layerId) {
+        return FeatureUtil.deleteFeatureById(mDataStore,TB_MAP_LAYER,layerId);
+    }
 }

@@ -28,5 +28,6 @@ public interface GeoMapManageService {
     */
    boolean createProjectMap(GeoMapInfoEntity mapInfoEntity);
    boolean addMapLayer(GeoMapLayerEntity mapLayerEntity);
+   boolean deleteMapLayer(String layerId);
 
 }
