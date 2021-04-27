@@ -426,28 +426,33 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
                 List<GeoMapLayerEntity> newLayerList=new ArrayList<>();
                 if(oldIndex > newIndex){
                     hasChange=true;
-                    // >0,1,2^,3,4,5,6,7,8
+                    // >0,1,2,3,4^,5,6,7,8
                     for(int i=0;i<num;i++){
                         if(i<newIndex){
                             newLayerList.add(layerEntityList.get(i));
                         }else if(i==newIndex){
                             newLayerList.add(oldLayer);
                             newLayerList.add(layerEntityList.get(i));
-                        }else if(i!=oldIndex){
-                            newLayerList.add(layerEntityList.get(i<oldIndex?i:(i-1)));
+                        }else {
+                            int index=i<oldIndex?i:(i+1);
+                            if(index<num) {
+                                newLayerList.add(layerEntityList.get(index));
+                            }
                         }
                     }
                 }else if(oldIndex<newIndex){
                     hasChange=true;
-                    // 1,2,^3,4,>5,6,7,8
+                    // 1,2,^3,4,5,6,7,>8
                     for(int i=0;i<num;i++){
                         if(i<oldIndex){
                             newLayerList.add(layerEntityList.get(i));
                         }else if(i==newIndex){
-                            newLayerList.add(layerEntityList.get(i));
                             newLayerList.add(oldLayer);
-                        }else if(i!=oldIndex){
-                            newLayerList.add(layerEntityList.get(i<newIndex?i:(i-1)));
+
+                        }else {
+                            if((i+1)<num) {
+                                newLayerList.add(layerEntityList.get(i + 1));
+                            }
                         }
                     }
                 }
