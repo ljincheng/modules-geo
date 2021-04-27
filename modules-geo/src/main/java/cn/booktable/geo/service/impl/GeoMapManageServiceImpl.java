@@ -470,4 +470,9 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
         }
         return false;
     }
+
+    @Override
+    public boolean displayMapLayer(String layerId, int display) {
+        return FeatureUtil.modifyFeatureById(mDataStore,TB_MAP_LAYER,new String[]{"display"},new Object[]{display},layerId);
+    }
 }

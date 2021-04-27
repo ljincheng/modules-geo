@@ -31,4 +31,6 @@ public interface GeoMapManageService {
    boolean deleteMapLayer(String layerId);
    boolean modifyMapLayerOrder(String mapId,int oldIndex,int newIndex);
 
+   boolean displayMapLayer(String layerId,int display);
+
 }
