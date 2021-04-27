@@ -463,6 +463,7 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
                     for(int i=0,k=newLayerList.size();i<k;i++) {
                         FeatureUtil.modifyFeatureById(mDataStore, TB_MAP_LAYER, names, new Object[]{i}, newLayerList.get(i).getId());
                     }
+                    return true;
                 }
 
             }
