@@ -226,7 +226,6 @@ public class GeoFeatureServiceImpl implements GeoFeatureService {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
             throw new GeoException(e.fillInStackTrace());
         }
 

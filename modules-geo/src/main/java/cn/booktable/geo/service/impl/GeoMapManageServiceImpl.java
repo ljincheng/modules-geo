@@ -7,6 +7,7 @@ import cn.booktable.geo.entity.GeoMapLayerEntity;
 import cn.booktable.geo.entity.GeoStyleInfoEntity;
 import cn.booktable.geo.service.GeoMapManageService;
 import cn.booktable.geo.utils.FeatureUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.DefaultTransaction;
 import org.geotools.data.Transaction;
@@ -19,6 +20,7 @@ import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -29,6 +31,7 @@ import java.util.*;
  */
 public class GeoMapManageServiceImpl implements GeoMapManageService {
     private JDBCDataStore mDataStore;
+    public static final String TB_MAP_INFO="geo_map_info";
     public static final String TB_MAP_LAYER="geo_map_layer";
     public GeoMapManageServiceImpl(JDBCDataStore dataStore){
         mDataStore=dataStore;
@@ -108,13 +111,99 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
     @Override
     public boolean createProjectMap(GeoMapInfoEntity mapInfoEntity) {
         boolean result=false;
-        try (Transaction tran=new DefaultTransaction(); Connection conn=mDataStore.getConnection(tran)){
-            result= this.createProjectMap(conn,mapInfoEntity);
-            tran.commit();
-        }catch (Exception ex){
+        try (Transaction transaction = new DefaultTransaction()) {
+            Map<String,Object> atts=new HashMap<>();
+            atts.put("map_id",mapInfoEntity.getMapId());
+            atts.put("project_id",mapInfoEntity.getProjectId());
+            atts.put("bbox",mapInfoEntity.getBbox());
+            atts.put("zoom",mapInfoEntity.getZoom());
+            atts.put("min_zoom",mapInfoEntity.getMinZoom());
+            atts.put("max_zoom",mapInfoEntity.getMaxZoom());
+            atts.put("center",mapInfoEntity.getCenter());
+            atts.put("title",mapInfoEntity.getTitle());
+            atts.put("sub_title",mapInfoEntity.getSubTitle());
+            atts.put("project_order",mapInfoEntity.getProjectOrder());
+            String id=mapInfoEntity.getMapId();
+
+            FeatureUtil.addFeature(transaction,mDataStore,TB_MAP_INFO,atts,id);
+            if(mapInfoEntity.getMapLayers()!=null ){
+                int len=mapInfoEntity.getMapLayers().size();
+                for(GeoMapLayerEntity layerEntity:mapInfoEntity.getMapLayers()){
+                    Map<String,Object> layerAtts=new HashMap<>();
+                    layerAtts.put("map_id",layerEntity.getMapId());
+                    layerAtts.put("id",layerEntity.getId());
+                    layerAtts.put("layer_order",layerEntity.getLayerOrder());
+                    layerAtts.put("display",layerEntity.getDisplay());
+                    layerAtts.put("style_id",layerEntity.getStyleId());
+                    layerAtts.put("layer_source",layerEntity.getLayerSource());
+                    layerAtts.put("layer_type",layerEntity.getLayerType());
+                    layerAtts.put("layer_filter",layerEntity.getLayerFilter());
+                    layerAtts.put("envelope",layerEntity.getEnvelope());
+                    layerAtts.put("title",layerEntity.getTitle());
+                    String layerId=layerEntity.getId();
+                    FeatureUtil.addFeature(transaction,mDataStore,TB_MAP_LAYER,layerAtts,layerId);
+                }
+            }
+            transaction.commit();
+            result=true;
+        } catch (Exception e) {
+            throw new GeoException(e.fillInStackTrace());
+        }
+        return result;
+    }
+
+
+    @Override
+    public boolean modifyMapInfo(GeoMapInfoEntity mapInfo) {
+        GeoMapInfoEntity oldMapInfo= findBaseMapInfo(mapInfo.getMapId());
+        if(oldMapInfo!=null) {
+            String[] names=new String[]{"project_id","bbox","zoom","min_zoom","max_zoom","center","title","sub_title","project_order"};
+            Object[] values=new Object[]{mapInfo.getProjectId(),mapInfo.getBbox(),mapInfo.getZoom(),mapInfo.getMinZoom(),mapInfo.getMaxZoom(),mapInfo.getCenter(),mapInfo.getTitle(),mapInfo.getSubTitle(),mapInfo.getProjectOrder()};
+            return FeatureUtil.modifyFeatureById(mDataStore, TB_MAP_INFO, names, values, mapInfo.getMapId());
+        }
+        return false;
+    }
+
+    @Override
+    public boolean deleteMapInfoByMapId(String mapId) {
+        boolean result=false;
+        try (Transaction transaction = new DefaultTransaction()) {
+            deleteMapInfoByMapId(transaction,mapId);
+            transaction.commit();
+            result= true;
+        }catch (IOException ex){
             throw new GeoException(ex);
         }
         return result;
+    }
+
+    @Override
+    public boolean deleteMapInfoByProject(String projectId) {
+        boolean result=false;
+        List<GeoMapInfoEntity> maps= projectMapInfoList(projectId);
+        if(maps==null || maps.size()<0){
+            return result;
+        }
+        try (Transaction transaction = new DefaultTransaction()) {
+            for(GeoMapInfoEntity map:maps){
+                deleteMapInfoByMapId(transaction,map.getMapId());
+            }
+            transaction.commit();
+            result= true;
+        }catch (IOException ex){
+            throw new GeoException(ex);
+        }
+        return result;
+    }
+
+    private void deleteMapInfoByMapId(Transaction transaction ,String mapId)throws IOException {
+            List<GeoMapLayerEntity> layers = queryMapLayerByLayerSource(mapId, null);
+            if (layers != null) {
+                for (GeoMapLayerEntity layer : layers) {
+                    FeatureUtil.deleteFeatureById(transaction,mDataStore, TB_MAP_LAYER, layer.getId());
+                }
+            }
+            FeatureUtil.deleteFeatureById(transaction,mDataStore, TB_MAP_INFO, mapId);
     }
 
     private GeoMapInfoEntity findMapInfoEntity(Connection conn, String mapId){
@@ -263,131 +352,6 @@ public class GeoMapManageServiceImpl implements GeoMapManageService {
             DBHelper.close(ps);
         }
         return mapInfoList;
-    }
-
-
-    private List<GeoMapLayerEntity> mapLayerListByMapId(Connection conn,String mapId,String layerSource) {
-        List<GeoMapLayerEntity> mapInfoList=new ArrayList<GeoMapLayerEntity>();
-        String sql="SELECT id, map_id,  layer_order, display, style_id,layer_source,layer_type,layer_filter,envelope,title  from geo_map_layer where map_id=?";
-        PreparedStatement ps=null;
-        try {
-            String orderBy=" order by t2.map_id desc, t2.layer_order asc";
-            if(layerSource==null || layerSource.length()==0) {
-                sql=sql+orderBy;
-                ps = conn.prepareStatement(sql);
-                ps.setString(1, mapId);
-            }else{
-                sql=sql+" and  t1.layer_source=? "+orderBy;
-                ps = conn.prepareStatement(sql);
-                ps.setString(1, mapId);
-                ps.setString(2, layerSource);
-            }
-            if (ps.execute()) {
-                ResultSet res = ps.executeQuery();
-                while (res.next()) {
-                    GeoMapLayerEntity obj = new GeoMapLayerEntity();
-                    obj.setId(res.getString(1));
-                    obj.setMapId(res.getString(2));
-                    obj.setLayerOrder(res.getInt(3));
-                    obj.setDisplay(res.getInt(4));
-                    obj.setStyleId(res.getString(5));
-                    obj.setLayerSource(res.getString(6));
-                    obj.setLayerType(res.getString(7));
-                    obj.setLayerFilter(res.getString(8));
-                    obj.setEnvelope(res.getString(9));
-                    obj.setTitle(res.getString(10));
-                    mapInfoList.add(obj);
-                }
-            }
-        }catch (Exception ex){
-            throw new GeoException(ex);
-        }finally {
-            DBHelper.close(ps);
-        }
-        return mapInfoList;
-    }
-
-
-    private List<GeoStyleInfoEntity> styleInfoListByMapId(Connection conn, String mapId) {
-        List<GeoStyleInfoEntity> styleInfoList=new ArrayList<GeoStyleInfoEntity>();
-        String sql="SELECT t3.style_id, t3.title, t3.style_type, t3.content, t3.create_time, t3.update_time\n" +
-                "FROM geo_style_info t3\n" +
-                "left join geo_map_layer t2 on t3.style_id=t2.style_id\n" +
-                "WHERE t2.map_id=?";
-        try (PreparedStatement ps=conn.prepareStatement(sql)){
-            ps.setString(1, mapId);
-            if (ps.execute()) {
-                ResultSet res = ps.executeQuery();
-                while (res.next()) {
-                    GeoStyleInfoEntity obj = new GeoStyleInfoEntity();
-                    obj.setStyleId(res.getString(1));
-                    obj.setTitle(res.getString(2));
-                    obj.setStyleType(res.getString(3));
-                    obj.setContent(res.getString(4));
-                    obj.setCreateTime(res.getDate(5));
-                    obj.setUpdateTime(res.getDate(6));
-                    styleInfoList.add(obj);
-                }
-            }
-        }catch (Exception ex){
-            throw new GeoException(ex);
-        }
-        return styleInfoList;
-    }
-
-
-    public boolean createProjectMap(Connection conn,GeoMapInfoEntity mapInfo) {
-        boolean result=false;
-        String sql1="INSERT INTO geo_map_info (map_id, project_id, project_order, title, sub_title, bbox, zoom, min_zoom, max_zoom, center, create_time, update_time)\n" +
-                "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
-        String sql2="INSERT INTO geo_map_layer (id, map_id, layer_order, display, style_id, layer_source, layer_type, layer_filter, title, envelope)\n" +
-                "VALUES(?, ?, ?, ?,?, ?, ?, ?, ?, ?);";
-        PreparedStatement ps=null;
-        try {
-            ps = conn.prepareStatement(sql1);
-            java.sql.Date now=new java.sql.Date(new Date().getTime());
-            ps.setString(1, mapInfo.getMapId());
-            ps.setString(2, mapInfo.getProjectId());
-            ps.setInt(3, mapInfo.getProjectOrder());
-            ps.setString(4, mapInfo.getTitle());
-            ps.setString(5, mapInfo.getSubTitle());
-            ps.setString(6,mapInfo.getBbox());
-            ps.setInt(7,mapInfo.getZoom());
-            ps.setInt(8,mapInfo.getMinZoom());
-            ps.setInt(9,mapInfo.getMaxZoom());
-            ps.setString(10,mapInfo.getCenter());
-            ps.setDate(11, now);
-            ps.setDate(12, now);
-            if (ps.execute()) {
-
-                if(mapInfo.getMapLayers()!=null && mapInfo.getMapLayers().size()>0){
-
-                    for(GeoMapLayerEntity mapLayer: mapInfo.getMapLayers()) {
-
-                        ps = conn.prepareStatement(sql2);
-                        ps.setString(1,mapLayer.getId());
-                        ps.setString(2, mapInfo.getMapId());
-                        ps.setInt(3, mapLayer.getLayerOrder());
-                        ps.setInt(4, mapLayer.getDisplay());
-                        ps.setString(5, mapLayer.getStyleId());
-                        ps.setString(6, mapLayer.getLayerSource());
-                        ps.setString(7, mapLayer.getLayerType());
-                        ps.setString(8, mapLayer.getLayerFilter());
-                        ps.setString(9, mapLayer.getTitle());
-                        ps.setString(10, mapLayer.getEnvelope());
-                        if (!ps.execute()) {
-                            throw new GeoException("保存图层失败");
-                        }
-                    }
-                }
-                result=true;
-            }
-        }catch (Exception ex){
-            throw new GeoException(ex);
-        }finally {
-            DBHelper.close(ps);
-        }
-        return result;
     }
 
 

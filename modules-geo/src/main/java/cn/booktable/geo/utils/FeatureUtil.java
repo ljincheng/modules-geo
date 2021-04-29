@@ -21,6 +21,7 @@ import org.opengis.feature.type.AttributeDescriptor;
 import org.opengis.filter.FilterFactory2;
 import org.opengis.filter.identity.FeatureId;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -61,6 +62,28 @@ public class FeatureUtil {
         return result;
     }
 
+    public static void addFeature(Transaction transaction,JDBCDataStore mDataStore, String featureName, Map<String, Object> atts,String id) throws IOException {
+
+            SimpleFeatureStore featureSource=(SimpleFeatureStore)mDataStore.getFeatureSource(featureName);
+            featureSource.setTransaction(transaction);
+            if(featureSource==null){
+                throw new GeoException("图层不存在");
+            }
+            SimpleFeatureType schema = featureSource.getSchema();
+            Object[] attributes = new Object[schema.getAttributeCount()];
+            for (int i = 0; i < attributes.length; i++) {
+                AttributeDescriptor descriptor = schema.getDescriptor(i);
+                attributes[i] =atts.get(descriptor.getLocalName());
+            }
+            SimpleFeature feature = SimpleFeatureBuilder.build(schema, attributes,id);
+            if(StringUtils.isNotBlank(id)) {
+                feature.getUserData().put(Hints.USE_PROVIDED_FID, true);
+                feature.getUserData().put(Hints.PROVIDED_FID, id);
+            }
+            SimpleFeatureCollection collection = DataUtilities.collection(feature);
+            featureSource.addFeatures(collection);
+    }
+
 
     public static boolean deleteFeature(JDBCDataStore mDataStore, String featureName,String filter){
         try (Transaction transaction = new DefaultTransaction()) {
@@ -97,6 +120,19 @@ public class FeatureUtil {
             throw new GeoException(e.fillInStackTrace());
         }
         return true;
+    }
+
+    public static void deleteFeatureById(Transaction transaction,JDBCDataStore mDataStore, String featureName,String id)throws IOException{
+            SimpleFeatureStore featureSource= (SimpleFeatureStore)mDataStore.getFeatureSource(featureName);
+            featureSource.setTransaction(transaction);
+            if(featureSource==null){
+                throw new GeoException("图层不存在");
+            }
+
+            Set<FeatureId> selected = new HashSet<FeatureId>();
+            selected.add(FF.featureId(id));
+            SimpleFeatureType schema = featureSource.getSchema();
+            featureSource.removeFeatures(FF.id(selected));
     }
 
     public static boolean modifyFeature(JDBCDataStore mDataStore, String featureName,String[] names,Object[] values,String filter){
